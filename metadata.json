@@ -1,0 +1,6 @@
+{
+  "name": "CBT TKA SMP Negeri 2 Pulung",
+  "description": "Aplikasi CBT Tes Kemampuan Akademik (TKA) Kelas IX SMP Negeri 2 Pulung untuk Matematika dan Bahasa Indonesia",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
