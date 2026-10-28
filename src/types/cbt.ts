@@ -49,7 +49,7 @@ export interface Exam {
   acak_opsi: boolean;
   tampilkan_nilai: boolean;
   status: 'Belum Dimulai' | 'Sedang Berlangsung' | 'Selesai';
-  tahun_pelajaran: string; // '2025/2026'
+  tahun_pelajaran?: string;
   question_ids: string[];
 }
 
@@ -69,6 +69,8 @@ export interface ExamAttempt {
   jawaban: Record<string, OptionKey | ''>;
   // Map question_id -> is flagged/ragu-ragu
   ragu_ragu: Record<string, boolean>;
+  // Anti-cheat violation count (leaving tab/window)
+  pelanggaran_tab?: number;
 }
 
 export interface ExamReport {

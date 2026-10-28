@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, RotateCcw, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Save, RotateCcw, ShieldCheck, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { StorageService, AppSettings } from '../../services/storageService';
 
 export const AdminSettings: React.FC = () => {
@@ -212,15 +212,18 @@ export const AdminSettings: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
-                Tahun Pelajaran
+                Tahun Pelajaran (Opsional)
               </label>
               <input
                 type="text"
-                value={settings.tahunPelajaran}
+                value={settings.tahunPelajaran || ''}
                 onChange={(e) => setSettings({ ...settings, tahunPelajaran: e.target.value })}
+                placeholder="Kosongkan jika aplikasi digunakan fleksibel untuk semua tahun"
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-                required
               />
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Biarkan kosong agar kartu & aplikasi bebas tahun ajaran.
+              </span>
             </div>
 
             <div>
@@ -239,6 +242,99 @@ export const AdminSettings: React.FC = () => {
               <span className="text-[11px] text-slate-400 mt-0.5 block">
                 Siswa dengan nilai ≥ {settings.kkm} dinyatakan Tuntas.
               </span>
+            </div>
+          </div>
+
+          {/* Anti-Cheat & Proctor Security Settings Section */}
+          <div className="pt-4 border-t border-slate-100">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldAlert className="w-4 h-4 text-sky-700" />
+              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                Keamanan Ujian & Anti-Kecurangan (Anti-Cheat)
+              </h3>
+            </div>
+
+            <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              
+              {/* Toggle Anti-Cheat */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-slate-800">
+                    Aktifkan Proteksi Anti-Curang & Deteksi Pindah Tab
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Mendeteksi otomatis ketika siswa membuka tab baru, beralih tab browser, atau meminimalkan jendela ujian.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.antiCheatEnabled}
+                  onChange={(e) => setSettings({ ...settings, antiCheatEnabled: e.target.checked })}
+                  className="w-4 h-4 text-sky-600 rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Max violations before auto submit */}
+              {settings.antiCheatEnabled && (
+                <div className="pt-3 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Batas Toleransi Keluar Tab / Buka Tab Baru
+                    </label>
+                    <select
+                      value={settings.maxTabViolations}
+                      onChange={(e) => setSettings({ ...settings, maxTabViolations: Number(e.target.value) })}
+                      className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs"
+                    >
+                      <option value={1}>1 kali (Sangat Ketat - langsung submit)</option>
+                      <option value={2}>2 kali (Ketat)</option>
+                      <option value={3}>3 kali (Standar Rekomendasi CBT)</option>
+                      <option value={5}>5 kali (Longgar)</option>
+                      <option value={0}>Peringatan Saja (Tanpa Auto-Submit)</option>
+                    </select>
+                    <span className="text-[11px] text-slate-400 mt-0.5 block">
+                      Jika melanggar melebihi batas ini, ujian otomatis dikumpulkan secara paksa (*auto-submit*).
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Kunci Mode Layar Penuh (Kiosk Mode Web)
+                    </label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="checkbox"
+                        id="autoFsToggle"
+                        checked={settings.autoFullscreen}
+                        onChange={(e) => setSettings({ ...settings, autoFullscreen: e.target.checked })}
+                        className="w-4 h-4 text-sky-600 rounded cursor-pointer"
+                      />
+                      <label htmlFor="autoFsToggle" className="text-xs text-slate-700 cursor-pointer">
+                        Wajibkan layar penuh (sembunyikan tab bar & status bar browser)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Block copy paste toggle */}
+              <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-slate-800">
+                    Blokir Klik Kanan & Salin Soal (Copy-Paste / Inspect)
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Mencegah siswa memblok teks soal, copy-paste ke Google/ChatGPT, serta memblok shortcut inspect F12 dan Ctrl+U.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.blockCopyPaste}
+                  onChange={(e) => setSettings({ ...settings, blockCopyPaste: e.target.checked })}
+                  className="w-4 h-4 text-sky-600 rounded cursor-pointer"
+                />
+              </div>
+
             </div>
           </div>
 

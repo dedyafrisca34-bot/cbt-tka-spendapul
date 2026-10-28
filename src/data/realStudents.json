@@ -1,0 +1,1452 @@
+[
+  {
+    "student_id": "std_01",
+    "nis": "7714",
+    "nama": "ABILYAN MARGIA PRATAMA",
+    "kelas": "9A",
+    "pin": "1111",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_02",
+    "nis": "7721",
+    "nama": "ALBY AZKA RADYVKA",
+    "kelas": "9A",
+    "pin": "1112",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_03",
+    "nis": "7725",
+    "nama": "ALVIN FIRSTYAN WILLY KUSUMA",
+    "kelas": "9A",
+    "pin": "1113",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_04",
+    "nis": "7731",
+    "nama": "ARDIAN TRI PRASETYO",
+    "kelas": "9A",
+    "pin": "1114",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_05",
+    "nis": "7735",
+    "nama": "ASHSAFA ZENATA",
+    "kelas": "9A",
+    "pin": "1115",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_06",
+    "nis": "7745",
+    "nama": "CHOIRUL FIKRI NUR FADHILAH",
+    "kelas": "9A",
+    "pin": "1116",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_07",
+    "nis": "7748",
+    "nama": "DEA JUAN AN'NAFI",
+    "kelas": "9A",
+    "pin": "1117",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_08",
+    "nis": "7751",
+    "nama": "DEWI UTARI",
+    "kelas": "9A",
+    "pin": "1118",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_09",
+    "nis": "7755",
+    "nama": "DJALU DANANDYAKSA RUMAWAN",
+    "kelas": "9A",
+    "pin": "1119",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_10",
+    "nis": "7760",
+    "nama": "ELANOVITA",
+    "kelas": "9A",
+    "pin": "1120",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_11",
+    "nis": "7773",
+    "nama": "FAZA PIAN FATHAN MUBINA",
+    "kelas": "9A",
+    "pin": "1121",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_12",
+    "nis": "7774",
+    "nama": "FEBRYAN ALHABZY NURATIKA PUTRA",
+    "kelas": "9A",
+    "pin": "1122",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_13",
+    "nis": "7784",
+    "nama": "HAYU PUJI ASTUTI",
+    "kelas": "9A",
+    "pin": "1123",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_14",
+    "nis": "7789",
+    "nama": "JONATHAN ACHMAD FATHUR",
+    "kelas": "9A",
+    "pin": "1124",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_15",
+    "nis": "7791",
+    "nama": "KARINA GALUH PRATIWI",
+    "kelas": "9A",
+    "pin": "1125",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_16",
+    "nis": "7795",
+    "nama": "KHEYLA AYU AGUSTIN RAHMADANI",
+    "kelas": "9A",
+    "pin": "1126",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_17",
+    "nis": "7796",
+    "nama": "LIESNA ADINDA SAFUTRI",
+    "kelas": "9A",
+    "pin": "1127",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_18",
+    "nis": "7797",
+    "nama": "LITA FARADILA",
+    "kelas": "9A",
+    "pin": "1128",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_19",
+    "nis": "7800",
+    "nama": "MARSHEL AN GRAHA",
+    "kelas": "9A",
+    "pin": "1129",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_20",
+    "nis": "7805",
+    "nama": "MUHAMMAD TITO SUGIARTO",
+    "kelas": "9A",
+    "pin": "1130",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_21",
+    "nis": "7815",
+    "nama": "NOVIAN EKA PRAYOGA",
+    "kelas": "9A",
+    "pin": "1131",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_22",
+    "nis": "7816",
+    "nama": "NOVIANDA FAIZA NADIFIA",
+    "kelas": "9A",
+    "pin": "1132",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_23",
+    "nis": "7818",
+    "nama": "PRATISCHA KIRANA PUTRI",
+    "kelas": "9A",
+    "pin": "1133",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_24",
+    "nis": "7819",
+    "nama": "PRAYOGA MIFZAL HARIANTO",
+    "kelas": "9A",
+    "pin": "1134",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_25",
+    "nis": "7820",
+    "nama": "RADITYA ARDIANSYAH",
+    "kelas": "9A",
+    "pin": "1135",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_26",
+    "nis": "7823",
+    "nama": "RAFIF YANUARD SAPUTRA",
+    "kelas": "9A",
+    "pin": "1136",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_27",
+    "nis": "7834",
+    "nama": "RIDYA AYUNDA PRAHESTI",
+    "kelas": "9A",
+    "pin": "1137",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_28",
+    "nis": "7848",
+    "nama": "TANIA ZAZKIA MAYZELLA NUR INTAN",
+    "kelas": "9A",
+    "pin": "1138",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_29",
+    "nis": "7852",
+    "nama": "VALENDRA FARHAN NIDA AL-KHALIL",
+    "kelas": "9A",
+    "pin": "1139",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_30",
+    "nis": "7854",
+    "nama": "WAFA AZZALIA ZAHRA",
+    "kelas": "9A",
+    "pin": "1140",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_31",
+    "nis": "7717",
+    "nama": "AFIF MU'AZAM",
+    "kelas": "9B",
+    "pin": "1141",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_32",
+    "nis": "7722",
+    "nama": "ALFIAN GIBRAN RENALDI",
+    "kelas": "9B",
+    "pin": "1142",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_33",
+    "nis": "7724",
+    "nama": "ALNUGRAH RIVEN ALVIANO",
+    "kelas": "9B",
+    "pin": "1143",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_34",
+    "nis": "7737",
+    "nama": "AWAL EL FANDY",
+    "kelas": "9B",
+    "pin": "1144",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_35",
+    "nis": "7740",
+    "nama": "BANYU SAKTI FADHILLAH",
+    "kelas": "9B",
+    "pin": "1145",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_36",
+    "nis": "7744",
+    "nama": "CHELSEA LATIFATUL QOIRUNNISA",
+    "kelas": "9B",
+    "pin": "1146",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_37",
+    "nis": "7752",
+    "nama": "DILLA ANINDYA PUTRI CHARIENZKY",
+    "kelas": "9B",
+    "pin": "1147",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_38",
+    "nis": "7754",
+    "nama": "DINDA NOVITA ZAHRA",
+    "kelas": "9B",
+    "pin": "1148",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_39",
+    "nis": "7758",
+    "nama": "DWI NURHAYATI",
+    "kelas": "9B",
+    "pin": "1149",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_40",
+    "nis": "7759",
+    "nama": "DYBORA PUTRI KINANTI",
+    "kelas": "9B",
+    "pin": "1150",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_41",
+    "nis": "7771",
+    "nama": "FANIA NURALIFTSA RAMADHANI",
+    "kelas": "9B",
+    "pin": "1151",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_42",
+    "nis": "7772",
+    "nama": "FARHAN RAIS ROMADHON",
+    "kelas": "9B",
+    "pin": "1152",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_43",
+    "nis": "7781",
+    "nama": "GIOFAREL PUTRA MAHESA PRATAMA",
+    "kelas": "9B",
+    "pin": "1153",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_44",
+    "nis": "7786",
+    "nama": "JANETA VIDIC NARA FINALDA",
+    "kelas": "9B",
+    "pin": "1154",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_45",
+    "nis": "7790",
+    "nama": "JURAINTAN SASQIA KHUMAIROK",
+    "kelas": "9B",
+    "pin": "1155",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_46",
+    "nis": "7792",
+    "nama": "KELVIN ADITYA PRATAMA",
+    "kelas": "9B",
+    "pin": "1156",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_47",
+    "nis": "7794",
+    "nama": "KHALIFATUL AVINA AZ ZAHRA",
+    "kelas": "9B",
+    "pin": "1157",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_48",
+    "nis": "7802",
+    "nama": "MELINDA SANDRA ADELIA",
+    "kelas": "9B",
+    "pin": "1158",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_49",
+    "nis": "7803",
+    "nama": "MIA RAHMADHANI",
+    "kelas": "9B",
+    "pin": "1159",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_50",
+    "nis": "7804",
+    "nama": "MUHAMMAD DANISH HAIKAL",
+    "kelas": "9B",
+    "pin": "1160",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_51",
+    "nis": "7808",
+    "nama": "NAJWA TZALATA PUTRI JANNAH",
+    "kelas": "9B",
+    "pin": "1161",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_52",
+    "nis": "7811",
+    "nama": "NICO ARFIANSAH ARBY NUR ARIFIN",
+    "kelas": "9B",
+    "pin": "1162",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_53",
+    "nis": "7829",
+    "nama": "REPINA VIVI DWI OKAVIANI",
+    "kelas": "9B",
+    "pin": "1163",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_54",
+    "nis": "7832",
+    "nama": "REYHAN NAFIS AZKA SYAHPUTRA",
+    "kelas": "9B",
+    "pin": "1164",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_55",
+    "nis": "7835",
+    "nama": "RIFQI EKA RAMADHANI",
+    "kelas": "9B",
+    "pin": "1165",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_56",
+    "nis": "7841",
+    "nama": "SELVIA PUTRI NUR FITASARI",
+    "kelas": "9B",
+    "pin": "1166",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_57",
+    "nis": "7850",
+    "nama": "TRI AGUNG PANGESTU",
+    "kelas": "9B",
+    "pin": "1167",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_58",
+    "nis": "7855",
+    "nama": "WAHYU CAHYO ADI NUGROHO",
+    "kelas": "9B",
+    "pin": "1168",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_59",
+    "nis": "7856",
+    "nama": "YOGI SHANDI PRADANA",
+    "kelas": "9B",
+    "pin": "1169",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_60",
+    "nis": "7858",
+    "nama": "ZELSHY ZELISKA PURRY EVELINA",
+    "kelas": "9B",
+    "pin": "1170",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_61",
+    "nis": "7859",
+    "nama": "ZHEZHA FAHREZGI ANDIKHAFILLAH",
+    "kelas": "9B",
+    "pin": "1171",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_62",
+    "nis": "7716",
+    "nama": "ADWA QAIREEN SUPRAYOGI",
+    "kelas": "9C",
+    "pin": "1172",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_63",
+    "nis": "7720",
+    "nama": "AIDA DELFIKA HANA AZ-ZAHRA",
+    "kelas": "9C",
+    "pin": "1173",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_64",
+    "nis": "7723",
+    "nama": "ALFIRA NUR JANATIN",
+    "kelas": "9C",
+    "pin": "1174",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_65",
+    "nis": "7727",
+    "nama": "AMBAR NUR KHOLISAH",
+    "kelas": "9C",
+    "pin": "1175",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_66",
+    "nis": "7730",
+    "nama": "ANNISA FITRIANI",
+    "kelas": "9C",
+    "pin": "1176",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_67",
+    "nis": "7739",
+    "nama": "BAGAS HENDRA SETYAWAN",
+    "kelas": "9C",
+    "pin": "1177",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_68",
+    "nis": "7742",
+    "nama": "BRYAN ANDREE SETIAWAN",
+    "kelas": "9C",
+    "pin": "1178",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_69",
+    "nis": "7746",
+    "nama": "DANIEL ARYA ROEMAN ANTHONIE",
+    "kelas": "9C",
+    "pin": "1179",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_70",
+    "nis": "7750",
+    "nama": "DEVINSON NATALIUS",
+    "kelas": "9C",
+    "pin": "1180",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_71",
+    "nis": "7764",
+    "nama": "ERYEN FAVIZIO ALKANZA INDRATMOKO",
+    "kelas": "9C",
+    "pin": "1181",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_72",
+    "nis": "7775",
+    "nama": "FERDY DWI SAPUTRA",
+    "kelas": "9C",
+    "pin": "1182",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_73",
+    "nis": "7776",
+    "nama": "FOORTEEN ALAM SEMESTA",
+    "kelas": "9C",
+    "pin": "1183",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_74",
+    "nis": "7785",
+    "nama": "IRFAN DWI SAPUTRA",
+    "kelas": "9C",
+    "pin": "1184",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_75",
+    "nis": "7787",
+    "nama": "JHANATUL FIRDHAUSYAH",
+    "kelas": "9C",
+    "pin": "1185",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_76",
+    "nis": "7788",
+    "nama": "JIHAN NABILA AZZAHRA",
+    "kelas": "9C",
+    "pin": "1186",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_77",
+    "nis": "7799",
+    "nama": "LUCY EVELYN SULISTIYO",
+    "kelas": "9C",
+    "pin": "1187",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_78",
+    "nis": "7806",
+    "nama": "MUHAMMAD AL REZA",
+    "kelas": "9C",
+    "pin": "1188",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_79",
+    "nis": "7807",
+    "nama": "NADIA VERLYCA ZILVI",
+    "kelas": "9C",
+    "pin": "1189",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_80",
+    "nis": "7809",
+    "nama": "NANCY PRIANKA PUTRI",
+    "kelas": "9C",
+    "pin": "1190",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_81",
+    "nis": "7810",
+    "nama": "NAZWA ARUM NUR RAHMADANI",
+    "kelas": "9C",
+    "pin": "1191",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_82",
+    "nis": "7813",
+    "nama": "NOVA VERONIKA BRILIAN ASMARANI",
+    "kelas": "9C",
+    "pin": "1192",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_83",
+    "nis": "7817",
+    "nama": "PRADHIKA DWY SYAHPUTRA",
+    "kelas": "9C",
+    "pin": "1193",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_84",
+    "nis": "7821",
+    "nama": "RAFA ALVARO HIGUAIN NOVANSAH SUGIARTO",
+    "kelas": "9C",
+    "pin": "1194",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_85",
+    "nis": "7825",
+    "nama": "REFAN MARCHEL ADITYA",
+    "kelas": "9C",
+    "pin": "1195",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_86",
+    "nis": "7836",
+    "nama": "RINDY ANTIKA",
+    "kelas": "9C",
+    "pin": "1196",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_87",
+    "nis": "7842",
+    "nama": "SEPFIANANTASYA GANIS OLAVIA PUTRI",
+    "kelas": "9C",
+    "pin": "1197",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_88",
+    "nis": "7844",
+    "nama": "SHERLY TRISYA",
+    "kelas": "9C",
+    "pin": "1198",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_89",
+    "nis": "7847",
+    "nama": "SYAZA ALYA NUR NAFI'AH",
+    "kelas": "9C",
+    "pin": "1199",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_90",
+    "nis": "7849",
+    "nama": "TEGAR SEPTYO PUTRA",
+    "kelas": "9C",
+    "pin": "1200",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_91",
+    "nis": "7851",
+    "nama": "UDORO GAMANG",
+    "kelas": "9C",
+    "pin": "1201",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_92",
+    "nis": "7715",
+    "nama": "ADRIVANO SYAHAIZAT PUTRA",
+    "kelas": "9D",
+    "pin": "1202",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_93",
+    "nis": "7718",
+    "nama": "AFIRA MUSLIMATUN NISAK",
+    "kelas": "9D",
+    "pin": "1203",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_94",
+    "nis": "7719",
+    "nama": "AGIS SAFERA FEBRIANA",
+    "kelas": "9D",
+    "pin": "1204",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_95",
+    "nis": "7726",
+    "nama": "ALVINO RAYSA ERFAN ARFASKA",
+    "kelas": "9D",
+    "pin": "1205",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_96",
+    "nis": "7732",
+    "nama": "ARENDRA AFIF WAHYU SAPUTRA",
+    "kelas": "9D",
+    "pin": "1206",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_97",
+    "nis": "7734",
+    "nama": "ARYA PUTRA KURNIAWAN",
+    "kelas": "9D",
+    "pin": "1207",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_98",
+    "nis": "7736",
+    "nama": "AULIA ADARA ALFADILLA",
+    "kelas": "9D",
+    "pin": "1208",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_99",
+    "nis": "7738",
+    "nama": "AZZAM MALIK ARIFUDIN",
+    "kelas": "9D",
+    "pin": "1209",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_100",
+    "nis": "7749",
+    "nama": "DELVINE ADELLIO FIRSTYO AZKA",
+    "kelas": "9D",
+    "pin": "1210",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_101",
+    "nis": "7753",
+    "nama": "DINASTY ART JUBAIR RAYA",
+    "kelas": "9D",
+    "pin": "1211",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_102",
+    "nis": "7756",
+    "nama": "DRAJAT FRAMUDHANI SAJATI",
+    "kelas": "9D",
+    "pin": "1212",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_103",
+    "nis": "7763",
+    "nama": "ERINA FALENTIA PUTRI",
+    "kelas": "9D",
+    "pin": "1213",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_104",
+    "nis": "7766",
+    "nama": "EVLIN LIDIA NATASYA",
+    "kelas": "9D",
+    "pin": "1214",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_105",
+    "nis": "7767",
+    "nama": "EXCHEL AZRIEL REFANO",
+    "kelas": "9D",
+    "pin": "1215",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_106",
+    "nis": "7777",
+    "nama": "GANDISCA WILY PUTRI ARNADIN",
+    "kelas": "9D",
+    "pin": "1216",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_107",
+    "nis": "7779",
+    "nama": "GHISELLA AURORA NAJWA",
+    "kelas": "9D",
+    "pin": "1217",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_108",
+    "nis": "7780",
+    "nama": "GILANG PRAMISWARA",
+    "kelas": "9D",
+    "pin": "1218",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_109",
+    "nis": "7793",
+    "nama": "KENSEO SASANA PUTRA",
+    "kelas": "9D",
+    "pin": "1219",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_110",
+    "nis": "7801",
+    "nama": "MAYKE SHINTA DWI PRATIWI",
+    "kelas": "9D",
+    "pin": "1220",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_111",
+    "nis": "7812",
+    "nama": "NIRMALA ARLITA KANZA",
+    "kelas": "9D",
+    "pin": "1221",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_112",
+    "nis": "7814",
+    "nama": "NOVANDA BIMA AJI SETYAWAN",
+    "kelas": "9D",
+    "pin": "1222",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_113",
+    "nis": "7824",
+    "nama": "RAIHAN KEANU SANCOKO",
+    "kelas": "9D",
+    "pin": "1223",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_114",
+    "nis": "7827",
+    "nama": "RELIO SASANA PUTRA",
+    "kelas": "9D",
+    "pin": "1224",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_115",
+    "nis": "7828",
+    "nama": "RENO ARDIANATA PRATAMA",
+    "kelas": "9D",
+    "pin": "1225",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_116",
+    "nis": "7837",
+    "nama": "RISKA APRELIA PURFIKASARI",
+    "kelas": "9D",
+    "pin": "1226",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_117",
+    "nis": "7840",
+    "nama": "SANIA MAGHFIROH RAMADANI",
+    "kelas": "9D",
+    "pin": "1227",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_118",
+    "nis": "7846",
+    "nama": "SOILUKMANUL HAKIM",
+    "kelas": "9D",
+    "pin": "1228",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_119",
+    "nis": "7977",
+    "nama": "ALVANO FEBRI INDRAWAN",
+    "kelas": "9E",
+    "pin": "1229",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_120",
+    "nis": "7728",
+    "nama": "ANANDA TIRTA GALIH ALFARO",
+    "kelas": "9E",
+    "pin": "1230",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_121",
+    "nis": "7729",
+    "nama": "ANGGARA DWI PRAMANA",
+    "kelas": "9E",
+    "pin": "1231",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_122",
+    "nis": "7733",
+    "nama": "ARJUNA ADITYA PRATAMA",
+    "kelas": "9E",
+    "pin": "1232",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_123",
+    "nis": "7741",
+    "nama": "BIMA KURNIA RISKI PRATAMA",
+    "kelas": "9E",
+    "pin": "1233",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_124",
+    "nis": "7743",
+    "nama": "CHEIKA NOVALIA SANDA HERLAMBANG",
+    "kelas": "9E",
+    "pin": "1234",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_125",
+    "nis": "7747",
+    "nama": "DARREL ARLIANO",
+    "kelas": "9E",
+    "pin": "1235",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_126",
+    "nis": "7757",
+    "nama": "DWI AGUS RAMDHANI",
+    "kelas": "9E",
+    "pin": "1236",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_127",
+    "nis": "7761",
+    "nama": "ELSA RAHMADHANI",
+    "kelas": "9E",
+    "pin": "1237",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_128",
+    "nis": "7762",
+    "nama": "ELVIANA EVA FEBRIANTI",
+    "kelas": "9E",
+    "pin": "1238",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_129",
+    "nis": "7765",
+    "nama": "ESA MAHENDRA",
+    "kelas": "9E",
+    "pin": "1239",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_130",
+    "nis": "7768",
+    "nama": "FACHRI PRATAMAOKTAVILIANO",
+    "kelas": "9E",
+    "pin": "1240",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_131",
+    "nis": "7769",
+    "nama": "FACHRUL DIEGO ALCHOIRUL FABIANSYACH NURWAHID",
+    "kelas": "9E",
+    "pin": "1241",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_132",
+    "nis": "7770",
+    "nama": "FAJAR ANDRIANTO",
+    "kelas": "9E",
+    "pin": "1242",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_133",
+    "nis": "7778",
+    "nama": "GEIVALDO VALENDRA",
+    "kelas": "9E",
+    "pin": "1243",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_134",
+    "nis": "7782",
+    "nama": "HABIB ANDEYAN PRATAMA",
+    "kelas": "9E",
+    "pin": "1244",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_135",
+    "nis": "7783",
+    "nama": "HAIKAL NUR ARDIANSYAH",
+    "kelas": "9E",
+    "pin": "1245",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_136",
+    "nis": "7798",
+    "nama": "LUCKY ZILAN FERDIANSYAH",
+    "kelas": "9E",
+    "pin": "1246",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_137",
+    "nis": "7978",
+    "nama": "PUTRY AYU ANGRAINI",
+    "kelas": "9E",
+    "pin": "1247",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_138",
+    "nis": "7822",
+    "nama": "RAFIDA ALMIRA SOFIA NUR SUGIARTI",
+    "kelas": "9E",
+    "pin": "1248",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_139",
+    "nis": "7826",
+    "nama": "REFI YUANITA SETASIA",
+    "kelas": "9E",
+    "pin": "1249",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_140",
+    "nis": "7830",
+    "nama": "RETNO AYU BASANTI",
+    "kelas": "9E",
+    "pin": "1250",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_141",
+    "nis": "7833",
+    "nama": "REZA PUTRA ARDANI",
+    "kelas": "9E",
+    "pin": "1251",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_142",
+    "nis": "7838",
+    "nama": "RIZKA NABILA PUTRI",
+    "kelas": "9E",
+    "pin": "1252",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_143",
+    "nis": "7843",
+    "nama": "SEREL AYUNI",
+    "kelas": "9E",
+    "pin": "1253",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_144",
+    "nis": "7845",
+    "nama": "SIFFALYA VALENT AVRIANY",
+    "kelas": "9E",
+    "pin": "1254",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  },
+  {
+    "student_id": "std_145",
+    "nis": "7857",
+    "nama": "ZAHRA KANAYA MUBAROK",
+    "kelas": "9E",
+    "pin": "1255",
+    "aktif": true,
+    "ruang": "",
+    "sesi": ""
+  }
+]

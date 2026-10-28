@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Download, Search, FileText, CheckCircle2, XCircle, X, Printer, Filter } from 'lucide-react';
+import { Download, Search, FileText, CheckCircle2, XCircle, X, Printer, Filter, AlertOctagon } from 'lucide-react';
 import { ExamReport, ExamAttempt } from '../../types/cbt';
 import { StorageService } from '../../services/storageService';
 
@@ -487,9 +487,11 @@ export const AdminRekapNilai: React.FC = () => {
                 <h3 className="text-sm sm:text-base font-bold uppercase tracking-wide underline underline-offset-4 text-slate-900">
                   DAFTAR REKAPITULASI NILAI TES KEMAMPUAN AKADEMIK (TKA) KELAS IX
                 </h3>
-                <div className="text-xs uppercase font-bold text-slate-700 mt-1">
-                  TAHUN PELAJARAN 2025/2026
-                </div>
+                {settings.tahunPelajaran ? (
+                  <div className="text-xs uppercase font-bold text-slate-700 mt-1">
+                    TAHUN PELAJARAN {settings.tahunPelajaran}
+                  </div>
+                ) : null}
               </div>
 
               {/* Document Metadata Strip */}
@@ -690,6 +692,21 @@ export const AdminRekapNilai: React.FC = () => {
                     <span className="text-emerald-700">Benar: {selectedAttempt.benar ?? 0}</span>
                     <span className="text-red-600">Salah: {selectedAttempt.salah ?? 0}</span>
                     <span className="text-slate-500">Kosong: {selectedAttempt.kosong ?? 0}</span>
+                  </div>
+
+                  {/* Anti-cheat tab violations status */}
+                  <div className="pt-2 border-t border-slate-200 mt-2">
+                    {selectedAttempt.pelanggaran_tab !== undefined && selectedAttempt.pelanggaran_tab > 0 ? (
+                      <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-[11px] font-semibold flex items-center gap-1.5">
+                        <AlertOctagon className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Catatan Keamanan: Terdeteksi {selectedAttempt.pelanggaran_tab}x keluar/berpindah tab saat ujian.</span>
+                      </div>
+                    ) : (
+                      <div className="p-1.5 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-800 text-[11px] font-medium flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Integritas: Disiplin (0 pelanggaran tab).</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

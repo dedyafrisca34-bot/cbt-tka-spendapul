@@ -79,13 +79,7 @@ function setupOtomatisDatabase() {
     {
       name: SHEETS.SISWA,
       headers: ['student_id', 'nis', 'nama', 'kelas', 'pin_hash', 'aktif', 'ruang', 'sesi'],
-      sample: [
-        ['std_01', '9001', 'Ahmad Dani Pratama', '9A', '12345', true, 'Ruang 01', 'Sesi 1'],
-        ['std_02', '9002', 'Bunga Citra Lestari', '9B', '12345', true, 'Ruang 01', 'Sesi 1'],
-        ['std_03', '9003', 'Cahyo Wibowo', '9C', '12345', true, 'Ruang 02', 'Sesi 1'],
-        ['std_04', '9004', 'Dewi Anggraini', '9D', '12345', true, 'Ruang 02', 'Sesi 2'],
-        ['std_05', '9005', 'Eko Prasetyo', '9E', '12345', true, 'Ruang 03', 'Sesi 2']
-      ]
+      sample: []
     },
     {
       name: SHEETS.SOAL,

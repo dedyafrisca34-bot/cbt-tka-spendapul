@@ -14,7 +14,7 @@ export const AdminUjian: React.FC = () => {
   const [formJudul, setFormJudul] = useState('');
   const [formMapel, setFormMapel] = useState<Subject>('Matematika');
   const [formDurasi, setFormDurasi] = useState<number>(90);
-  const [formTanggal, setFormTanggal] = useState('2025-06-20');
+  const [formTanggal, setFormTanggal] = useState(() => new Date().toISOString().split('T')[0]);
   const [formJamMulai, setFormJamMulai] = useState('08:00');
   const [formJamSelesai, setFormJamSelesai] = useState('10:00');
   const [formJumlahSoal, setFormJumlahSoal] = useState<number>(40);
@@ -27,7 +27,7 @@ export const AdminUjian: React.FC = () => {
     setFormJudul('TKA Matematika Kelas IX');
     setFormMapel('Matematika');
     setFormDurasi(90);
-    setFormTanggal('2025-06-20');
+    setFormTanggal(new Date().toISOString().split('T')[0]);
     setFormJamMulai('08:00');
     setFormJamSelesai('10:00');
     setFormJumlahSoal(40);
@@ -81,7 +81,7 @@ export const AdminUjian: React.FC = () => {
       acak_opsi: false,
       tampilkan_nilai: formTampilkanNilai,
       status: formStatus,
-      tahun_pelajaran: '2025/2026',
+      tahun_pelajaran: '',
       question_ids: mapelQuestions.slice(0, formJumlahSoal).map((q) => q.question_id),
     };
 

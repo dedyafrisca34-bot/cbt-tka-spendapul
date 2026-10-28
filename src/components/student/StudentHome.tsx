@@ -101,7 +101,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <FileText className="w-5 h-5 text-sky-700" />
               <span>Daftar Ujian Tersedia</span>
             </h2>
-            <span className="text-xs text-slate-500">Tahun Pelajaran 2025/2026</span>
+            <span className="text-xs text-slate-500 font-medium">TKA Kelas IX (Sembilan)</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,6 +229,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             <li>Siswa hanya diperkenankan menggunakan 1 perangkat selama ujian berlangsung.</li>
             <li>Setiap jawaban yang Anda pilih akan <strong>tersimpan otomatis</strong> ke server secara realtime.</li>
             <li>Waktu ujian akan terus berjalan di latar belakang sesuai durasi resmi.</li>
+            <li><strong>Proteksi Keamanan:</strong> Dilarang membuka tab baru, berpindah aplikasi, atau meminimalkan browser. Sistem akan mendeteksi dan memberi peringatan pelanggaran.</li>
             <li>Anda dapat menandai nomor soal sebagai <strong>Ragu-ragu</strong> untuk diperiksa kembali sebelum pengumpulan.</li>
             <li>Jangan mengklik tombol "Selesai Ujian" sebelum Anda yakin semua jawaban telah lengkap dan ditinjau.</li>
           </ul>
@@ -269,8 +270,9 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               </div>
             </div>
 
-            <div className="mt-4 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800">
-              ⚠️ Pengatur waktu (timer) akan langsung aktif begitu Anda menekan tombol "Mulai Sekarang".
+            <div className="mt-4 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 space-y-1">
+              <div>⚠️ <strong>Perhatian:</strong> Timer akan langsung berjalan saat Anda menekan tombol di bawah.</div>
+              <div className="text-red-700 font-medium">🛡️ Sistem Anti-Curang aktif: dilarang membuka tab baru atau berpindah aplikasi selama ujian.</div>
             </div>
 
             <div className="mt-6 flex gap-3">
@@ -295,7 +297,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-        SMP Negeri 2 Pulung · CBT TKA Kelas IX Tahun Pelajaran 2025/2026
+        SMP Negeri 2 Pulung · CBT Tes Kemampuan Akademik (TKA) Kelas IX
       </footer>
     </div>
   );

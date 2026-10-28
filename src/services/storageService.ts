@@ -31,6 +31,10 @@ export interface AppSettings {
   gasApiUrl?: string;
   apiSecretToken?: string;
   syncWithGas: boolean;
+  antiCheatEnabled: boolean;
+  maxTabViolations: number;
+  blockCopyPaste: boolean;
+  autoFullscreen: boolean;
 }
 
 export const OFFICIAL_GAS_API_URL =
@@ -39,7 +43,7 @@ export const OFFICIAL_GAS_API_URL =
 const DEFAULT_SETTINGS: AppSettings = {
   namaSekolah: 'SMP Negeri 2 Pulung',
   motto: 'Berkarakter • Berprestasi • Maju',
-  tahunPelajaran: '2025/2026',
+  tahunPelajaran: '',
   kkm: 75,
   alamatSekolah: 'Jl. Raya Pulung, Desa Kesugihan, Kec. Pulung, Kabupaten Ponorogo, Jawa Timur 63492',
   kabupatenKota: 'Kabupaten Ponorogo',
@@ -52,7 +56,52 @@ const DEFAULT_SETTINGS: AppSettings = {
   gasApiUrl: OFFICIAL_GAS_API_URL,
   apiSecretToken: 'cbt-smpn2pulung-secret-2025',
   syncWithGas: true,
+  antiCheatEnabled: true,
+  maxTabViolations: 3,
+  blockCopyPaste: true,
+  autoFullscreen: true,
 };
+
+// Helper to detect and purge demo/sample students
+export function isDemoStudent(student: { nis?: string | number; nama?: string }): boolean {
+  if (!student) return false;
+  const sNis = String(student.nis || '').trim();
+  const sNama = String(student.nama || '').trim().toLowerCase();
+
+  const nisNum = parseInt(sNis, 10);
+  if (!isNaN(nisNum) && nisNum >= 12345 && nisNum <= 12364) {
+    return true;
+  }
+
+  const demoNames = [
+    'andi saputra',
+    'bunga lestari',
+    'cahya pratama',
+    'dwi anggraini',
+    'eko setiawan',
+    'fani rahmawati',
+    'gilang ramadhan',
+    'hana safitri',
+    'irfan hakim',
+    'jovita aurelia',
+    'kevin maulana',
+    'larasati putri',
+    'muhammad rizky',
+    'nadya eka safira',
+    'oki prasetyo',
+    'putri wulandari',
+    'rendy kurniawan',
+    'siti nurhaliza',
+    'taufiq hidayat',
+    'vina anggraini',
+    'ahmad dani pratama',
+    'bunga citra lestari',
+    'cahyo wibowo',
+    'dewi anggraini',
+    'eko prasetyo',
+  ];
+  return demoNames.includes(sNama);
+}
 
 // Safe JSON parser
 function safeParse<T>(val: string | null, fallback: T): T {
@@ -67,14 +116,20 @@ function safeParse<T>(val: string | null, fallback: T): T {
 export const StorageService = {
   // Initialize storage if empty
   init() {
-    const DATASET_VERSION = '3.0.0_production_clean';
+    const DATASET_VERSION = '6.0.0_smpn2pulung_real_145';
     const isNewVersion = localStorage.getItem('cbt_dataset_version') !== DATASET_VERSION;
 
     if (!localStorage.getItem(KEYS.STUDENTS) || isNewVersion) {
+      // Overwrite with authentic 145 students of SMP Negeri 2 Pulung
       localStorage.setItem(KEYS.STUDENTS, JSON.stringify(INITIAL_STUDENTS));
-      // Completely clear any previous demo attempts for production usage
-      localStorage.setItem(KEYS.ATTEMPTS, JSON.stringify([]));
       localStorage.setItem('cbt_dataset_version', DATASET_VERSION);
+    } else {
+      // Ensure any leftover demo students in existing cache are purged
+      const current = safeParse<Student[]>(localStorage.getItem(KEYS.STUDENTS), INITIAL_STUDENTS);
+      const cleaned = current.filter((s) => !isDemoStudent(s));
+      if (cleaned.length !== current.length || cleaned.length === 0) {
+        localStorage.setItem(KEYS.STUDENTS, JSON.stringify(cleaned.length > 0 ? cleaned : INITIAL_STUDENTS));
+      }
     }
     if (!localStorage.getItem(KEYS.QUESTIONS)) {
       localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
@@ -85,11 +140,19 @@ export const StorageService = {
     if (!localStorage.getItem(KEYS.SETTINGS)) {
       localStorage.setItem(KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
     } else {
-      // Ensure the official permanent GAS URL is active in existing user storage
+      // Ensure the official permanent GAS URL is active and clear outdated year in existing user storage
       const currentSettings = safeParse<AppSettings>(localStorage.getItem(KEYS.SETTINGS), DEFAULT_SETTINGS);
+      let changed = false;
+      if (currentSettings.tahunPelajaran === '2025/2026') {
+        currentSettings.tahunPelajaran = '';
+        changed = true;
+      }
       if (!currentSettings.gasApiUrl || currentSettings.gasApiUrl !== OFFICIAL_GAS_API_URL) {
         currentSettings.gasApiUrl = OFFICIAL_GAS_API_URL;
         currentSettings.syncWithGas = true;
+        changed = true;
+      }
+      if (changed) {
         localStorage.setItem(KEYS.SETTINGS, JSON.stringify(currentSettings));
       }
     }
@@ -113,7 +176,9 @@ export const StorageService = {
   },
 
   setStudents(students: Student[]) {
-    localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
+    // Sanitize any demo names before saving
+    const sanitized = students.filter((s) => !isDemoStudent(s));
+    localStorage.setItem(KEYS.STUDENTS, JSON.stringify(sanitized));
   },
 
   // Settings
@@ -123,7 +188,10 @@ export const StorageService = {
     if (!settings.gasApiUrl || settings.gasApiUrl !== OFFICIAL_GAS_API_URL) {
       settings.gasApiUrl = OFFICIAL_GAS_API_URL;
     }
-    return settings;
+    return {
+      ...DEFAULT_SETTINGS,
+      ...settings,
+    };
   },
 
   saveSettings(settings: AppSettings) {
@@ -133,7 +201,12 @@ export const StorageService = {
   // Students
   getStudents(): Student[] {
     this.init();
-    return safeParse<Student[]>(localStorage.getItem(KEYS.STUDENTS), INITIAL_STUDENTS);
+    const stored = safeParse<Student[]>(localStorage.getItem(KEYS.STUDENTS), INITIAL_STUDENTS);
+    const cleaned = stored.filter((s) => !isDemoStudent(s));
+    if (cleaned.length !== stored.length) {
+      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(cleaned.length > 0 ? cleaned : INITIAL_STUDENTS));
+    }
+    return cleaned.length > 0 ? cleaned : INITIAL_STUDENTS;
   },
 
   saveStudent(student: Student) {
@@ -300,6 +373,29 @@ export const StorageService = {
         });
       }
     }
+  },
+
+  recordTabViolation(attemptId: string): { violations: number; exceeded: boolean } {
+    const attempts = this.getAttempts();
+    const attempt = attempts.find((a) => a.attempt_id === attemptId);
+    if (!attempt) return { violations: 0, exceeded: false };
+
+    const currentCount = (attempt.pelanggaran_tab || 0) + 1;
+    attempt.pelanggaran_tab = currentCount;
+    this.saveAttempt(attempt);
+
+    const settings = this.getSettings();
+    const max = settings.maxTabViolations ?? 3;
+    const exceeded = Boolean(settings.antiCheatEnabled && max > 0 && currentCount >= max);
+
+    // Sync violation event
+    this.syncToGas({
+      action: 'recordViolation',
+      attempt_id: attemptId,
+      pelanggaran_tab: currentCount,
+    });
+
+    return { violations: currentCount, exceeded };
   },
 
   submitExam(attemptId: string): ExamAttempt {

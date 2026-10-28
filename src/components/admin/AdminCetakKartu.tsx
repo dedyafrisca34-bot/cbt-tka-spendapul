@@ -32,11 +32,11 @@ export const AdminCetakKartu: React.FC<AdminCetakKartuProps> = ({ onBackToDataSi
   
   // Customization Options for the printed cards
   const [judulUjian, setJudulUjian] = useState('TES KEMAMPUAN AKADEMIK (TKA) KELAS IX');
-  const [tahunPelajaran, setTahunPelajaran] = useState(settings.tahunPelajaran || '2025/2026');
+  const [tahunPelajaran, setTahunPelajaran] = useState(settings.tahunPelajaran || '');
   const [ruangUjian, setRuangUjian] = useState('Lab Komputer CBT');
   const [sesiUjian, setSesiUjian] = useState('Sesi Terjadwal');
   const [penandatangan, setPenandatangan] = useState<'kepala' | 'proktor' | 'keduanya'>('kepala');
-  const [tempatTanggal, setTempatTanggal] = useState(`${settings.tempatCetak || 'Pulung, Ponorogo'}, 2025`);
+  const [tempatTanggal, setTempatTanggal] = useState(`${settings.tempatCetak || 'Pulung, Ponorogo'}`);
   const [tampilkanFotoBox, setTampilkanFotoBox] = useState(true);
   const [tampilkanPetunjuk, setTampilkanPetunjuk] = useState(true);
   const [cardDensity, setCardDensity] = useState<'standard' | 'compact'>('standard');
@@ -368,9 +368,11 @@ export const AdminCetakKartu: React.FC<AdminCetakKartuProps> = ({ onBackToDataSi
                       <div className="text-[10px] font-bold text-sky-900 leading-tight mt-0.5">
                         KARTU PESERTA {judulUjian}
                       </div>
-                      <div className="text-[9px] font-medium text-slate-600 leading-none">
-                        TAHUN PELAJARAN {tahunPelajaran}
-                      </div>
+                      {tahunPelajaran ? (
+                        <div className="text-[9px] font-medium text-slate-600 leading-none">
+                          TAHUN PELAJARAN {tahunPelajaran}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 

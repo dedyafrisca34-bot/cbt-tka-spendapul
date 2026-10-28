@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Lock, ArrowRight, ShieldCheck, BookOpen, AlertCircle } from 'lucide-react';
 import { SchoolLogo } from '../common/SchoolLogo';
 import { Student, AdminUser } from '../../types/cbt';
-import { StorageService, OFFICIAL_GAS_API_URL } from '../../services/storageService';
+import { StorageService, OFFICIAL_GAS_API_URL, isDemoStudent } from '../../services/storageService';
 import { INITIAL_ADMIN } from '../../data/initialData';
 
 interface LoginViewProps {
@@ -28,18 +28,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
           headers: { Accept: 'application/json' },
         });
         const data = await resp.json();
-        if (data && data.success && Array.isArray(data.students) && data.students.length > 0) {
-          const currentList = StorageService.getStudents();
-          const nisMap = new Map(currentList.map((s) => [s.nis, s]));
-          data.students.forEach((s: Student) => {
-            nisMap.set(s.nis, {
+        if (data && data.success && Array.isArray(data.students)) {
+          const freshReal = (data.students as Student[])
+            .filter((s) => !isDemoStudent(s))
+            .map((s) => ({
               ...s,
               student_id: s.student_id || `std_${s.nis}`,
               pin: s.pin || '12345',
               aktif: s.aktif !== false,
-            });
-          });
-          StorageService.setStudents(Array.from(nisMap.values()));
+            }));
+          if (freshReal.length > 0) {
+            StorageService.setStudents(freshReal);
+          }
         }
       } catch {
         // Silent fallback
@@ -106,9 +106,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
         });
         const data = await resp.json();
         if (data && data.success && Array.isArray(data.students)) {
-          const freshList = data.students as Student[];
-          // Update local cache
-          StorageService.setStudents(freshList);
+          const freshList = (data.students as Student[]).filter((s) => !isDemoStudent(s));
+          if (freshList.length > 0) {
+            StorageService.setStudents(freshList);
+          }
           student = freshList.find((s) => s.nis === u && s.pin === p);
           if (student) {
             if (!student.aktif) {
@@ -182,8 +183,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
           </div>
 
           <div className="pt-6 border-t border-white/15 text-xs text-sky-200 flex items-center justify-between">
-            <span>Tahun Ajaran 2025/2026</span>
-            <span className="font-semibold text-white">Sistem CBT v2.5</span>
+            <span>Portal CBT Resmi</span>
+            <span className="font-semibold text-white">SMPN 2 Pulung</span>
           </div>
         </div>
 
@@ -293,7 +294,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
             </div>
 
             <div className="mt-6 text-center text-[11px] text-slate-400">
-              SMP Negeri 2 Pulung · Tahun Pelajaran 2025/2026
+              SMP Negeri 2 Pulung · CBT Tes Kemampuan Akademik (TKA)
             </div>
           </div>
         </div>

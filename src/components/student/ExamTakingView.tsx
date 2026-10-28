@@ -12,6 +12,10 @@ import {
   Square,
   ShieldCheck,
   Check,
+  Maximize2,
+  Minimize2,
+  AlertOctagon,
+  ShieldAlert,
 } from 'lucide-react';
 import { SchoolLogo } from '../common/SchoolLogo';
 import { Student, Exam, Question, ExamAttempt, OptionKey } from '../../types/cbt';
@@ -51,6 +55,114 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
 
   // Confirmation finish modal
   const [showFinishModal, setShowFinishModal] = useState(false);
+
+  // Anti-cheat configurations & state
+  const settings = useMemo(() => StorageService.getSettings(), []);
+  const [violations, setViolations] = useState<number>(initialAttempt.pelanggaran_tab || 0);
+  const [showViolationModal, setShowViolationModal] = useState(false);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => Boolean(document.fullscreenElement));
+
+  // Toggle fullscreen mode
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  // Listen to fullscreen changes
+  useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  // Request fullscreen on start if enabled
+  useEffect(() => {
+    if (settings.antiCheatEnabled && settings.autoFullscreen && !document.fullscreenElement) {
+      const fsTimer = setTimeout(() => {
+        document.documentElement.requestFullscreen().catch(() => {
+          // Some browsers require explicit user tap/click
+        });
+      }, 500);
+      return () => clearTimeout(fsTimer);
+    }
+  }, [settings.antiCheatEnabled, settings.autoFullscreen]);
+
+  // Anti-cheat detector: VisibilityChange & Blur (Tab switch / minimize / open new tab)
+  useEffect(() => {
+    if (!settings.antiCheatEnabled) return;
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        // Detected user switched to another tab, minimized, or opened new app
+        const res = StorageService.recordTabViolation(initialAttempt.attempt_id);
+        setViolations(res.violations);
+        setShowViolationModal(true);
+
+        if (res.exceeded) {
+          setIsLockedOut(true);
+          // Auto submit after 3 seconds so student reads the notification
+          setTimeout(() => {
+            const finalAttempt = StorageService.submitExam(initialAttempt.attempt_id);
+            onFinishExam(finalAttempt);
+          }, 3200);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [settings.antiCheatEnabled, initialAttempt.attempt_id, onFinishExam]);
+
+  // Anti-cheat: Block right-click context menu, copy/cut/paste, and devtools shortcuts
+  useEffect(() => {
+    if (!settings.blockCopyPaste) return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+
+    const handleCopyPaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      return false;
+    };
+
+    const handleKeyShortcut = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      // Block Ctrl+C, Ctrl+V, Ctrl+U (view source), Ctrl+S, Ctrl+A, Ctrl+P (print), F12, Ctrl+Shift+I
+      if (
+        (e.ctrlKey && ['c', 'v', 'u', 's', 'a', 'p'].includes(key)) ||
+        (e.metaKey && ['c', 'v', 'u', 's', 'a', 'p'].includes(key)) ||
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(key))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('copy', handleCopyPaste);
+    window.addEventListener('cut', handleCopyPaste);
+    window.addEventListener('paste', handleCopyPaste);
+    window.addEventListener('keydown', handleKeyShortcut);
+
+    return () => {
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('copy', handleCopyPaste);
+      window.removeEventListener('cut', handleCopyPaste);
+      window.removeEventListener('paste', handleCopyPaste);
+      window.removeEventListener('keydown', handleKeyShortcut);
+    };
+  }, [settings.blockCopyPaste]);
 
   // Server countdown timer in seconds
   const calculateRemainingSeconds = useCallback(() => {
@@ -206,17 +318,49 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
             </div>
           </div>
 
-          {/* Right: Student Profile */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-sky-600 border border-sky-400/40 flex items-center justify-center text-white">
-              <User className="w-4 h-4" />
-            </div>
-            <div className="hidden sm:block text-right">
-              <div className="text-xs font-bold text-white leading-tight">
-                {student.nama}
+          {/* Right: Security Badge, Fullscreen & Student Profile */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Anti-cheat status badge */}
+            {settings.antiCheatEnabled && (
+              violations > 0 ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/25 border border-amber-400/40 text-amber-200 text-[11px] font-bold">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span className="hidden sm:inline">Peringatan:</span>
+                  <span>{violations}/{settings.maxTabViolations}</span>
+                </div>
+              ) : (
+                <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-[11px] font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Mode Aman</span>
+                </div>
+              )
+            )}
+
+            {/* Fullscreen Button */}
+            <button
+              type="button"
+              onClick={handleToggleFullscreen}
+              title={isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh (Kiosk)'}
+              className="p-1.5 rounded-lg bg-sky-700/80 hover:bg-sky-600 border border-sky-500/40 text-sky-100 transition-colors cursor-pointer"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </button>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-sky-600 border border-sky-400/40 flex items-center justify-center text-white">
+                <User className="w-4 h-4" />
               </div>
-              <div className="text-[10px] text-sky-200 font-mono">
-                NIS {student.nis}
+              <div className="hidden sm:block text-right">
+                <div className="text-xs font-bold text-white leading-tight">
+                  {student.nama}
+                </div>
+                <div className="text-[10px] text-sky-200 font-mono">
+                  NIS {student.nis}
+                </div>
               </div>
             </div>
           </div>
@@ -486,12 +630,12 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center shrink-0 border border-sky-100">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-[11px] text-slate-500">Tahun Pelajaran</div>
-                  <div className="font-bold text-slate-900">{exam.tahun_pelajaran}</div>
+                  <div className="text-[11px] text-slate-500">Proteksi Ujian</div>
+                  <div className="font-bold text-emerald-700">Anti-Curang Aktif</div>
                 </div>
               </div>
 
@@ -573,6 +717,65 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
                 Kumpulkan Sekarang
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 4. ANTI-CHEAT TAB VIOLATION ALERT MODAL                  */}
+      {/* ======================================================== */}
+      {showViolationModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border-2 border-red-500 animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Warning Icon with pulsating badge */}
+            <div className="w-16 h-16 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 ring-8 ring-red-50 animate-pulse">
+              <AlertOctagon className="w-9 h-9" />
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-extrabold text-red-600 text-center tracking-tight uppercase">
+              Peringatan Pelanggaran!
+            </h3>
+            <p className="text-xs sm:text-sm font-semibold text-slate-800 text-center mt-1">
+              Terdeteksi Membuka Tab Baru atau Meninggalkan Ujian
+            </p>
+            <p className="text-xs text-slate-600 text-center mt-2 leading-relaxed">
+              Sistem mencatat Anda berpindah tab browser, membuka tab baru, atau meminimalkan layar ujian. Tindakan ini dilarang dan otomatis terekam oleh proktor.
+            </p>
+
+            {/* Violation Meter Box */}
+            <div className="my-5 p-4 bg-red-50 rounded-2xl border border-red-200 text-center">
+              <div className="text-[11px] uppercase font-bold text-red-800 tracking-wider">
+                Catatan Pelanggaran Siswa
+              </div>
+              <div className="text-3xl font-black text-red-600 my-1 font-mono">
+                {violations} <span className="text-xs font-medium text-slate-500">/ {settings.maxTabViolations} kali batas toleransi</span>
+              </div>
+              {isLockedOut ? (
+                <div className="text-xs font-bold text-red-700 mt-2 bg-red-100/80 p-2 rounded-xl border border-red-300">
+                  🚨 Batas maksimal toleransi ({settings.maxTabViolations}x) telah terlampaui! Ujian Anda otomatis dikumpulkan oleh sistem.
+                </div>
+              ) : (
+                <div className="text-[11px] text-red-600 font-medium mt-1">
+                  Peringatan: Jika mencapai {settings.maxTabViolations} kali, ujian akan langsung dikumpulkan secara paksa (*auto-submit*).
+                </div>
+              )}
+            </div>
+
+            {!isLockedOut && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowViolationModal(false);
+                  if (settings.autoFullscreen && !document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                  }
+                }}
+                className="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-red-600/30 transition-all cursor-pointer"
+              >
+                Saya Mengerti & Kembali Mengerjakan Ujian
+              </button>
+            )}
           </div>
         </div>
       )}

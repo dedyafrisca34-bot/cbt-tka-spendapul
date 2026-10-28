@@ -1,32 +1,7 @@
 import { Student, Question, Exam, ExamAttempt, AdminUser, CognitiveLevel } from '../types/cbt';
+import { REAL_SMPN2_STUDENTS } from './realStudentsList';
 
-export const INITIAL_STUDENTS: Student[] = [
-  // Kelas 9A
-  { student_id: 'std_01', nis: '12345', nama: 'Andi Saputra', kelas: '9A', pin: '12345', aktif: true },
-  { student_id: 'std_02', nis: '12346', nama: 'Bunga Lestari', kelas: '9A', pin: '12346', aktif: true },
-  { student_id: 'std_06', nis: '12350', nama: 'Fani Rahmawati', kelas: '9A', pin: '12350', aktif: true },
-  { student_id: 'std_10', nis: '12354', nama: 'Jovita Aurelia', kelas: '9A', pin: '12354', aktif: true },
-  // Kelas 9B
-  { student_id: 'std_03', nis: '12347', nama: 'Cahya Pratama', kelas: '9B', pin: '12347', aktif: true },
-  { student_id: 'std_04', nis: '12348', nama: 'Dwi Anggraini', kelas: '9B', pin: '12348', aktif: true },
-  { student_id: 'std_07', nis: '12351', nama: 'Gilang Ramadhan', kelas: '9B', pin: '12351', aktif: true },
-  { student_id: 'std_11', nis: '12355', nama: 'Kevin Maulana', kelas: '9B', pin: '12355', aktif: true },
-  // Kelas 9C
-  { student_id: 'std_05', nis: '12349', nama: 'Eko Setiawan', kelas: '9C', pin: '12349', aktif: true },
-  { student_id: 'std_08', nis: '12352', nama: 'Hana Safitri', kelas: '9C', pin: '12352', aktif: true },
-  { student_id: 'std_09', nis: '12353', nama: 'Irfan Hakim', kelas: '9C', pin: '12353', aktif: true },
-  { student_id: 'std_12', nis: '12356', nama: 'Larasati Putri', kelas: '9C', pin: '12356', aktif: true },
-  // Kelas 9D
-  { student_id: 'std_13', nis: '12357', nama: 'Muhammad Rizky', kelas: '9D', pin: '12357', aktif: true },
-  { student_id: 'std_14', nis: '12358', nama: 'Nadya Eka Safira', kelas: '9D', pin: '12358', aktif: true },
-  { student_id: 'std_15', nis: '12359', nama: 'Oki Prasetyo', kelas: '9D', pin: '12359', aktif: true },
-  { student_id: 'std_16', nis: '12360', nama: 'Putri Wulandari', kelas: '9D', pin: '12360', aktif: true },
-  // Kelas 9E
-  { student_id: 'std_17', nis: '12361', nama: 'Rendy Kurniawan', kelas: '9E', pin: '12361', aktif: true },
-  { student_id: 'std_18', nis: '12362', nama: 'Siti Nurhaliza', kelas: '9E', pin: '12362', aktif: true },
-  { student_id: 'std_19', nis: '12363', nama: 'Taufiq Hidayat', kelas: '9E', pin: '12363', aktif: true },
-  { student_id: 'std_20', nis: '12364', nama: 'Vina Anggraini', kelas: '9E', pin: '12364', aktif: true },
-];
+export const INITIAL_STUDENTS: Student[] = REAL_SMPN2_STUDENTS;
 
 export const INITIAL_ADMIN: AdminUser = {
   admin_id: 'adm_01',
@@ -527,7 +502,7 @@ const indonesianQuestionsData: Omit<Question, 'question_id' | 'mapel'>[] = [
     teks_soal: 'Kalimat yang tepat sesuai kaidah ejaan Bahasa Indonesia (EYD/PUEBI) adalah ....',
     opsi_a: 'Ibu membeli apel, jeruk dan mangga di pasar.',
     opsi_b: 'Semua siswa di harapkan berkumpul di aula sekolah.',
-    opsi_c: 'Pada hari Senin, 20 Juni 2025, SMP Negeri 2 Pulung mengadakan ujian CBT.',
+    opsi_c: 'Pada hari Senin, SMP Negeri 2 Pulung mengadakan asesmen CBT terstandar.',
     opsi_d: 'Budi bertanya: "kapan kamu akan berangkat ke Ponorogo?"',
     kunci: 'C',
     pembahasan: 'Opsi C menggunakan tanda koma setelah keterangan waktu dan kapitalisasi nama instansi secara benar.',
@@ -819,14 +794,14 @@ export const INITIAL_EXAMS: Exam[] = [
     judul: 'TKA Matematika',
     mapel: 'Matematika',
     durasi_menit: 90,
-    mulai_at: '2025-06-20 08:00',
-    selesai_at: '2025-06-20 10:00',
+    mulai_at: '08:00',
+    selesai_at: '10:00',
     jumlah_soal: 40,
     acak_soal: false,
     acak_opsi: false,
     tampilkan_nilai: true,
     status: 'Sedang Berlangsung',
-    tahun_pelajaran: '2025/2026',
+    tahun_pelajaran: '',
     question_ids: INITIAL_QUESTIONS.filter((q) => q.mapel === 'Matematika').map((q) => q.question_id),
   },
   {
@@ -834,14 +809,14 @@ export const INITIAL_EXAMS: Exam[] = [
     judul: 'TKA Bahasa Indonesia',
     mapel: 'Bahasa Indonesia',
     durasi_menit: 90,
-    mulai_at: '2025-06-20 10:30',
-    selesai_at: '2025-06-20 12:30',
+    mulai_at: '10:30',
+    selesai_at: '12:30',
     jumlah_soal: 40,
     acak_soal: false,
     acak_opsi: false,
     tampilkan_nilai: true,
-    status: 'Belum Dimulai',
-    tahun_pelajaran: '2025/2026',
+    status: 'Sedang Berlangsung',
+    tahun_pelajaran: '',
     question_ids: INITIAL_QUESTIONS.filter((q) => q.mapel === 'Bahasa Indonesia').map((q) => q.question_id),
   },
 ];

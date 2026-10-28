@@ -17,9 +17,13 @@ import {
   CloudUpload,
   CheckCircle2,
   Sparkles,
+  Copy,
+  ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
 import { Student } from '../../types/cbt';
-import { StorageService, OFFICIAL_GAS_API_URL } from '../../services/storageService';
+import { StorageService, OFFICIAL_GAS_API_URL, isDemoStudent } from '../../services/storageService';
+import { GAS_SCRIPT_CODE } from '../../services/gasCodeTemplate';
 
 interface AdminDataSiswaProps {
   onOpenCetakKartu?: () => void;
@@ -43,6 +47,8 @@ export const AdminDataSiswa: React.FC<AdminDataSiswaProps> = ({ onOpenCetakKartu
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
   const [autoSyncNotice, setAutoSyncNotice] = useState<string | null>(null);
+  const [gasCodeNeedsUpdate, setGasCodeNeedsUpdate] = useState<boolean>(false);
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   // Form State
   const [formNis, setFormNis] = useState('');
@@ -57,7 +63,8 @@ export const AdminDataSiswa: React.FC<AdminDataSiswaProps> = ({ onOpenCetakKartu
   const pushStudentsSilently = useCallback(async (studentsToPush: Student[], customUrl?: string) => {
     const settings = StorageService.getSettings();
     const targetUrl = customUrl || settings.gasApiUrl || OFFICIAL_GAS_API_URL;
-    if (!targetUrl) return;
+    const cleanList = studentsToPush.filter((s) => !isDemoStudent(s));
+    if (!targetUrl || cleanList.length === 0) return;
 
     setSyncStatus('syncing');
     try {
@@ -66,7 +73,7 @@ export const AdminDataSiswa: React.FC<AdminDataSiswaProps> = ({ onOpenCetakKartu
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'syncStudents',
-          students: studentsToPush,
+          students: cleanList,
         }),
       });
       const data = await response.json();
@@ -106,36 +113,35 @@ export const AdminDataSiswa: React.FC<AdminDataSiswaProps> = ({ onOpenCetakKartu
         if (!isMounted) return;
 
         if (data && data.success && Array.isArray(data.students)) {
-          if (data.students.length > 0) {
-            // Spreadsheet has student data: automatically merge with local database
-            const currentList = StorageService.getStudents();
-            const nisMap = new Map(currentList.map((s) => [s.nis, s]));
-            data.students.forEach((s: Student) => {
-              nisMap.set(s.nis, {
-                ...s,
-                student_id: s.student_id || `std_${s.nis}`,
-                pin: s.pin || '12345',
-                aktif: s.aktif !== false,
-              });
-            });
-            const merged = Array.from(nisMap.values());
-            StorageService.setStudents(merged);
-            setStudents(merged);
+          setGasCodeNeedsUpdate(false);
+          // Filter out demo students from Spreadsheet response
+          const realStudents = (data.students as Student[])
+            .filter((s) => !isDemoStudent(s))
+            .map((s) => ({
+              ...s,
+              student_id: s.student_id || `std_${s.nis}`,
+              pin: s.pin || '12345',
+              aktif: s.aktif !== false,
+            }));
+
+          if (realStudents.length > 0) {
+            StorageService.setStudents(realStudents);
+            setStudents(realStudents);
             const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             setLastSyncTime(timeStr);
             setSyncStatus('synced');
-            setAutoSyncNotice(`Data siswa berhasil disinkronkan otomatis dari Spreadsheet (${timeStr})`);
+            setAutoSyncNotice(`Data siswa resmi SMPN 2 Pulung (${realStudents.length} siswa) tersinkron otomatis (${timeStr})`);
             setTimeout(() => setAutoSyncNotice(null), 5000);
           } else {
-            // Spreadsheet is still empty: auto-populate spreadsheet with current local dataset
             const currentList = StorageService.getStudents();
-            if (currentList.length > 0) {
-              await pushStudentsSilently(currentList, targetUrl);
-            }
+            setStudents(currentList);
             const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             setLastSyncTime(timeStr);
             setSyncStatus('synced');
           }
+        } else if (data && String(data.message).includes('Action GET tidak dikenali')) {
+          setGasCodeNeedsUpdate(true);
+          setSyncStatus('idle');
         } else {
           setSyncStatus('idle');
         }
@@ -356,27 +362,34 @@ export const AdminDataSiswa: React.FC<AdminDataSiswaProps> = ({ onOpenCetakKartu
       const data = await response.json();
 
       if (data.success && Array.isArray(data.students)) {
-        if (data.students.length === 0) {
-          alert('Spreadsheet terhubung, tetapi Sheet "Siswa" belum memiliki data baris siswa.');
+        setGasCodeNeedsUpdate(false);
+        const realStudents = (data.students as Student[])
+          .filter((s) => !isDemoStudent(s))
+          .map((s) => ({
+            ...s,
+            student_id: s.student_id || `std_${s.nis}`,
+            pin: s.pin || '12345',
+            aktif: s.aktif !== false,
+          }));
+
+        if (realStudents.length === 0) {
+          alert('Spreadsheet terhubung, tetapi belum ada baris data siswa asli di Sheet Siswa.');
         } else {
-          const currentList = StorageService.getStudents();
-          const nisMap = new Map(currentList.map((s) => [s.nis, s]));
-          data.students.forEach((s: Student) => {
-            nisMap.set(s.nis, {
-              ...s,
-              student_id: s.student_id || `std_${s.nis}`,
-              pin: s.pin || '12345',
-              aktif: s.aktif !== false,
-            });
-          });
-          const merged = Array.from(nisMap.values());
-          StorageService.setStudents(merged);
-          setStudents(merged);
+          StorageService.setStudents(realStudents);
+          setStudents(realStudents);
           const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           setLastSyncTime(timeStr);
           setSyncStatus('synced');
-          alert(`Sukses! Berhasil menarik dan memperbarui ${data.students.length} data siswa dari Google Spreadsheet.`);
+          alert(`Sukses! Berhasil menyinkronkan ${realStudents.length} data siswa resmi SMP Negeri 2 Pulung dari Google Spreadsheet (seluruh nama demo otomatis dibersihkan).`);
         }
+      } else if (data && String(data.message).includes('Action GET tidak dikenali')) {
+        setGasCodeNeedsUpdate(true);
+        setSyncStatus('idle');
+        alert(
+          'KODE GOOGLE APPS SCRIPT PERLU DIPERBARUI:\n\n' +
+          'Web App Google Apps Script di script.google.com masih menjalankan versi lama (belum memiliki fitur baca Siswa getStudents).\n\n' +
+          'Silakan periksa kotak panduan kuning di halaman Data Siswa untuk menyalin Kode Terbaru dan lakukan "New version" di deployment Google Apps Script Anda.'
+        );
       } else {
         alert(data.message || 'Gagal mengambil data siswa dari Google Spreadsheet.');
       }
@@ -486,6 +499,83 @@ export const AdminDataSiswa: React.FC<AdminDataSiswaProps> = ({ onOpenCetakKartu
           </button>
         </div>
       </div>
+
+      {/* GAS Script Version Notice Banner */}
+      {gasCodeNeedsUpdate && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-amber-100 rounded-xl text-amber-800 shrink-0">
+              <AlertTriangle className="w-5 h-5 text-amber-700" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-amber-950 text-sm">
+                Penyebab Data Belum Terbaca: Kode Google Apps Script Anda Masih Versi Lama
+              </h3>
+              <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+                Saat diuji ke endpoint Apps Script Anda, server merespons: <code className="bg-amber-100 font-mono px-1 py-0.5 rounded font-bold">Action GET tidak dikenali.</code>. Ini terjadi karena script di <strong>script.google.com</strong> Anda belum diperbarui dengan kode terbaru yang memiliki fungsi pembaca Sheet Siswa (<code className="font-mono">getStudents</code>).
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/80 border border-amber-200 rounded-xl p-3.5 text-xs text-slate-800 space-y-2">
+            <div className="font-bold text-slate-900 flex items-center gap-1.5">
+              <span>Langkah 2 Menit untuk Mengatasinya (Sangat Mudah):</span>
+            </div>
+            <ol className="list-decimal list-inside space-y-1.5 pl-1 text-[11px] leading-relaxed text-slate-700">
+              <li>
+                Klik tombol <strong>&ldquo;Salin Kode Terbaru Code.gs&rdquo;</strong> di bawah ini.
+              </li>
+              <li>
+                Buka tab project Anda di <a href="https://script.google.com" target="_blank" rel="noreferrer" className="text-sky-700 underline font-bold">script.google.com</a>.
+              </li>
+              <li>
+                Hapus semua kode lama di <code>Code.gs</code>, lalu <strong>Paste (Tempel)</strong> kode baru yang sudah disalin. Tekan Ctrl+S untuk simpan.
+              </li>
+              <li>
+                Klik tombol biru <strong>Deploy (Terapkan) &gt; Manage deployments (Kelola penerapan)</strong>.
+              </li>
+              <li>
+                Klik ikon <strong>Pensil (Edit)</strong> di samping kanan, lalu pada dropdown <strong>Version (Versi)</strong> pilih <strong>New version (Versi baru)</strong>.
+              </li>
+              <li>
+                Klik <strong>Deploy (Terapkan)</strong>. Selesai!
+              </li>
+            </ol>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(GAS_SCRIPT_CODE);
+                setCopiedCode(true);
+                setTimeout(() => setCopiedCode(false), 2500);
+              }}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+            >
+              <Copy className="w-4 h-4" />
+              <span>{copiedCode ? '✓ Kode Terbaru Berhasil Disalin!' : 'Salin Kode Terbaru Code.gs'}</span>
+            </button>
+
+            <a
+              href="https://script.google.com"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-amber-300 font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>Buka script.google.com</span>
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            </a>
+
+            <button
+              onClick={handleSyncFromSpreadsheet}
+              className="px-3.5 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Coba Cek Ulang Sekarang</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Auto-Sync Live Status Banner */}
       <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 border border-emerald-200/90 rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
