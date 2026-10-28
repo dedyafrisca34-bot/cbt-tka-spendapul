@@ -191,6 +191,8 @@ export const StorageService = {
     return {
       ...DEFAULT_SETTINGS,
       ...settings,
+      gasApiUrl: OFFICIAL_GAS_API_URL,
+      syncWithGas: true,
     };
   },
 
@@ -437,15 +439,136 @@ export const StorageService = {
 
     this.saveAttempt(attempt);
 
-    // Async submit to Google Sheets
-    this.syncToGas({
-      action: 'submitExam',
+    // Send complete exam results to Google Sheets
+    const student = this.getStudents().find((s) => s.student_id === attempt.student_id);
+    const scorePayload = {
+      action: 'recordScore',
       attempt_id: attempt.attempt_id,
       exam_id: attempt.exam_id,
       student_id: attempt.student_id,
-    });
+      nis: student?.nis || '',
+      nama: student?.nama || '',
+      kelas: student?.kelas || '',
+      mapel: exam?.mapel || '',
+      skor: skor,
+      benar: benar,
+      salah: salah,
+      kosong: kosong,
+      pelanggaran_tab: attempt.pelanggaran_tab || 0,
+      selesai_at: attempt.selesai_at,
+    };
+
+    // 1. Post sync
+    this.syncToGas(scorePayload);
+
+    // 2. GET sync fallback (avoids any mobile browser CORS issues)
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (endpoint) {
+        const q = new URLSearchParams({
+          action: 'recordScore',
+          nis: scorePayload.nis,
+          nama: scorePayload.nama,
+          kelas: scorePayload.kelas,
+          mapel: scorePayload.mapel,
+          skor: String(scorePayload.skor),
+          benar: String(scorePayload.benar),
+          salah: String(scorePayload.salah),
+          kosong: String(scorePayload.kosong),
+          pelanggaran_tab: String(scorePayload.pelanggaran_tab),
+          attempt_id: scorePayload.attempt_id,
+          exam_id: scorePayload.exam_id,
+          selesai_at: scorePayload.selesai_at,
+        });
+        fetch(`${endpoint}?${q.toString()}`, { mode: 'no-cors' }).catch(() => {});
+      }
+    } catch (_) {}
 
     return attempt;
+  },
+
+  // Pull remote student attempts and scores from Google Spreadsheet
+  async fetchRemoteReports(): Promise<{ success: boolean; count: number; error?: string }> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return { success: false, count: 0, error: 'Endpoint Google Apps Script belum disetel.' };
+
+      const resp = await fetch(`${endpoint}?action=getResults`, {
+        method: 'GET',
+      });
+      if (!resp.ok) {
+        return { success: false, count: 0, error: `Server merespons HTTP ${resp.status}` };
+      }
+      const data = await resp.json();
+      if (!data || !Array.isArray(data.results)) {
+        return { success: false, count: 0, error: data?.error || 'Format data nilai tidak valid' };
+      }
+
+      const existingAttempts = this.getAttempts();
+      const students = this.getStudents();
+      let importedCount = 0;
+
+      interface RemoteScoreItem {
+        nis?: string | number;
+        mapel?: string;
+        skor?: number | string;
+        benar?: number | string;
+        salah?: number | string;
+        kosong?: number | string;
+        pelanggaran_tab?: number | string;
+        timestamp?: string;
+        attempt_id?: string;
+        exam_id?: string;
+      }
+
+      data.results.forEach((item: RemoteScoreItem) => {
+        const sNis = String(item.nis || '').trim();
+        if (!sNis) return;
+
+        const matchedStudent = students.find((s) => s.nis === sNis);
+        if (!matchedStudent || isDemoStudent({ nis: sNis })) return;
+        const studentId = matchedStudent.student_id;
+        const isMath = String(item.mapel || '').toLowerCase().includes('matematika');
+        const examId = item.exam_id || (isMath ? 'exam_01' : 'exam_02');
+        const attemptId = item.attempt_id || `att_remote_${sNis}_${examId}`;
+
+        const existingIdx = existingAttempts.findIndex(
+          (a) => a.student_id === studentId && a.exam_id === examId
+        );
+
+        const attemptObj: ExamAttempt = {
+          attempt_id: attemptId,
+          exam_id: examId,
+          student_id: studentId,
+          mulai_at: item.timestamp || new Date().toISOString(),
+          batas_waktu_at: item.timestamp || new Date().toISOString(),
+          selesai_at: item.timestamp || new Date().toISOString(),
+          status: 'Submitted',
+          skor: Number(item.skor || 0),
+          benar: Number(item.benar || 0),
+          salah: Number(item.salah || 0),
+          kosong: Number(item.kosong || 0),
+          pelanggaran_tab: Number(item.pelanggaran_tab || 0),
+          jawaban: {},
+          ragu_ragu: {},
+        };
+
+        if (existingIdx >= 0) {
+          existingAttempts[existingIdx] = attemptObj;
+        } else {
+          existingAttempts.push(attemptObj);
+        }
+        importedCount++;
+      });
+
+      localStorage.setItem(KEYS.ATTEMPTS, JSON.stringify(existingAttempts));
+      return { success: true, count: importedCount };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, count: 0, error: msg };
+    }
   },
 
   // Reports compilation

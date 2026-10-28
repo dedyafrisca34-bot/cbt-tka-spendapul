@@ -192,8 +192,9 @@ function getSecretToken() {
  */
 function doGet(e) {
   try {
-    const action = e.parameter.action;
-    const token = e.parameter.token;
+    const params = (e && e.parameter) ? e.parameter : {};
+    const action = params.action || 'ping';
+    const token = params.token || '';
 
     // Optional token validation for protected read routes
     if (action === 'getQuestionsAdmin' || action === 'getAdminDashboard') {
@@ -211,12 +212,16 @@ function doGet(e) {
     }
 
     if (action === 'getExamQuestionsForStudent') {
-      const examId = e.parameter.exam_id;
+      const examId = params.exam_id;
       return getExamQuestionsForStudentHandler(examId);
     }
 
     if (action === 'getStudents') {
       return getStudentsHandler();
+    }
+
+    if (action === 'recordScore') {
+      return recordScoreHandler(params);
     }
 
     if (action === 'getResults') {
@@ -238,11 +243,22 @@ function doPost(e) {
     // Acquire lock for up to 10 seconds to prevent concurrent write collisions in Google Sheets
     lock.waitLock(10000);
 
-    const data = JSON.parse(e.postData.contents || '{}');
-    const action = data.action;
+    let data = {};
+    if (e && e.postData && e.postData.contents) {
+      try {
+        data = JSON.parse(e.postData.contents);
+      } catch (parseErr) {
+        data = {};
+      }
+    }
+    const action = data.action || '';
 
     if (action === 'studentLogin') {
       return studentLoginHandler(data);
+    }
+
+    if (action === 'recordScore') {
+      return recordScoreHandler(data);
     }
 
     if (action === 'startExam') {
@@ -534,6 +550,108 @@ function submitExamHandler(data) {
     success: true,
     message: 'Ujian berhasil dikirim!',
     result: { benar: benar, salah: salah, skor: skor }
+  });
+}
+
+function recordScoreHandler(data) {
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName('Nilai');
+  
+  // Jika sheet Nilai belum ada di Spreadsheet, otomatis buat sheet baru ber-header biru
+  if (!sheet) {
+    sheet = ss.insertSheet('Nilai');
+    const headers = ['timestamp', 'nis', 'nama', 'kelas', 'mapel', 'skor', 'benar', 'salah', 'kosong', 'pelanggaran_tab', 'attempt_id', 'exam_id'];
+    const hRange = sheet.getRange(1, 1, 1, headers.length);
+    hRange.setValues([headers]);
+    hRange.setBackground("#0369a1");
+    hRange.setFontColor("#ffffff");
+    hRange.setFontWeight("bold");
+    hRange.setHorizontalAlignment("center");
+    sheet.setFrozenRows(1);
+  }
+
+  const sNis = String(data.nis || '').trim();
+  const sMapel = String(data.mapel || '').trim();
+  const skor = Number(data.skor !== undefined ? data.skor : 0);
+  const benar = Number(data.benar || 0);
+  const salah = Number(data.salah || 0);
+  const kosong = Number(data.kosong || 0);
+  const pelanggaran = Number(data.pelanggaran_tab || 0);
+  const timestamp = data.selesai_at || new Date().toISOString();
+
+  // Cari apakah siswa sudah memiliki baris nilai untuk mapel ini (agar tidak duplikat)
+  const rows = sheet.getDataRange().getValues();
+  let rowIndex = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][1]).trim() === sNis && String(rows[i][4]).trim().toLowerCase() === sMapel.toLowerCase()) {
+      rowIndex = i + 1; // 1-indexed row number
+      break;
+    }
+  }
+
+  const rowData = [
+    timestamp,
+    sNis,
+    data.nama || '',
+    data.kelas || '',
+    sMapel,
+    skor,
+    benar,
+    salah,
+    kosong,
+    pelanggaran,
+    data.attempt_id || '',
+    data.exam_id || ''
+  ];
+
+  if (rowIndex > 0) {
+    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+
+  return createJsonResponse({
+    success: true,
+    message: 'Nilai berhasil disimpan di Spreadsheet!',
+    data: { nis: sNis, mapel: sMapel, skor: skor }
+  });
+}
+
+function getResultsHandler() {
+  const ss = getDbSpreadsheet();
+  const sheet = ss.getSheetByName('Nilai');
+  if (!sheet) {
+    return createJsonResponse({ success: true, total: 0, results: [] });
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const results = [];
+  // Baris 1 header: timestamp | nis | nama | kelas | mapel | skor | benar | salah | kosong | pelanggaran_tab | attempt_id | exam_id
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const sNis = String(row[1] || '').trim();
+    if (!sNis) continue;
+
+    results.push({
+      timestamp: row[0] ? String(row[0]) : '',
+      nis: sNis,
+      nama: String(row[2] || ''),
+      kelas: String(row[3] || ''),
+      mapel: String(row[4] || ''),
+      skor: Number(row[5] || 0),
+      benar: Number(row[6] || 0),
+      salah: Number(row[7] || 0),
+      kosong: Number(row[8] || 0),
+      pelanggaran_tab: Number(row[9] || 0),
+      attempt_id: String(row[10] || ''),
+      exam_id: String(row[11] || '')
+    });
+  }
+
+  return createJsonResponse({
+    success: true,
+    total: results.length,
+    results: results
   });
 }
 

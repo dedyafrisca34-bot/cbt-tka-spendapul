@@ -43,20 +43,20 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       {/* Top Header */}
       <header className="bg-sky-800 text-white shadow-md sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <SchoolLogo size={40} showText={true} lightText={true} subtext="CBT TKA · Kelas IX" />
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <SchoolLogo size={34} showText={true} lightText={true} subtext="CBT TKA · Kelas IX" />
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-bold text-white">{student.nama}</div>
+              <div className="text-sm font-bold text-white leading-tight">{student.nama}</div>
               <div className="text-xs text-sky-200">NIS: {student.nis} · Kelas {student.kelas}</div>
             </div>
 
             <button
               onClick={onLogout}
-              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="min-h-[38px] px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Keluar</span>
@@ -66,30 +66,30 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex-1 w-full space-y-4 sm:space-y-6">
         
         {/* Welcome Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-sky-600 mb-1">
+            <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-sky-600 mb-1">
               Portal Siswa Kelas IX
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+            <h1 className="text-lg sm:text-2xl font-bold text-slate-900 leading-tight">
               Selamat Datang, {student.nama}!
             </h1>
-            <p className="text-slate-600 text-sm mt-1">
+            <p className="text-slate-600 text-xs sm:text-sm mt-1 leading-relaxed">
               Silakan pilih mata pelajaran ujian yang dijadwalkan hari ini. Pastikan koneksi internet stabil sebelum memulai.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-sky-50 px-4 py-3 rounded-xl border border-sky-100 shrink-0">
-            <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-sm">
+          <div className="flex items-center gap-3 bg-sky-50 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl border border-sky-100 shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm">
               {student.kelas}
             </div>
             <div className="text-xs">
-              <span className="text-slate-500 block">Identitas Siswa</span>
-              <span className="font-bold text-slate-900 block">{student.nama}</span>
-              <span className="text-sky-700 font-mono">NIS: {student.nis}</span>
+              <span className="text-slate-500 block text-[10px] sm:text-xs">Identitas Siswa</span>
+              <span className="font-bold text-slate-900 block truncate max-w-[180px] sm:max-w-none">{student.nama}</span>
+              <span className="text-sky-700 font-mono text-[11px]">NIS: {student.nis}</span>
             </div>
           </div>
         </div>
@@ -113,7 +113,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               return (
                 <div
                   key={exam.exam_id}
-                  className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden"
+                  className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden"
                 >
                   {/* Top indicator bar */}
                   <div
@@ -127,56 +127,56 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                   />
 
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100">
+                    <div className="flex items-center justify-between mb-3 gap-2">
+                      <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100 shrink-0">
                         {exam.mapel}
                       </span>
 
                       {/* Status Badges */}
                       {isSubmitted ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 shrink-0">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Ujian Selesai</span>
                         </span>
                       ) : isInProgress ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 shrink-0">
                           <Clock className="w-3.5 h-3.5 animate-pulse" />
                           <span>Sedang Dikerjakan</span>
                         </span>
                       ) : (
-                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
+                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md shrink-0">
                           {exam.status}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-lg font-bold text-slate-900">{exam.judul}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">{exam.judul}</h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-normal">
                       Tes Kemampuan Akademik (TKA) Standar Kelulusan SMPN 2 Pulung
                     </p>
 
-                    <div className="grid grid-cols-2 gap-2 mt-5 py-3 border-y border-slate-100 text-xs text-slate-600">
+                    <div className="grid grid-cols-2 gap-2 mt-4 sm:mt-5 py-3 border-y border-slate-100 text-[11px] sm:text-xs text-slate-600">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-sky-600" />
-                        <span>Durasi: <strong>{exam.durasi_menit} Menit</strong></span>
+                        <Clock className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                        <span>Durasi: <strong>{exam.durasi_menit}m</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-sky-600" />
-                        <span>Jumlah: <strong>{exam.jumlah_soal} Butir Soal</strong></span>
+                        <FileText className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                        <span>Jumlah: <strong>{exam.jumlah_soal} Soal</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 text-center font-bold text-sky-600">📅</span>
+                        <span className="text-xs text-sky-600 shrink-0">📅</span>
                         <span>Jadwal: <strong>{exam.mulai_at.slice(0, 10)}</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 text-center font-bold text-sky-600">🕒</span>
-                        <span>Waktu: <strong>{exam.mulai_at.slice(11)} - {exam.selesai_at.slice(11)}</strong></span>
+                        <span className="text-xs text-sky-600 shrink-0">🕒</span>
+                        <span>Waktu: <strong>{exam.mulai_at.slice(11)}</strong></span>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Button */}
-                  <div className="mt-6 pt-2">
+                  <div className="mt-5 sm:mt-6 pt-2">
                     {isSubmitted ? (
                       <div className="space-y-2">
                         {exam.tampilkan_nilai && attempt?.skor !== undefined && (
@@ -189,7 +189,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                         )}
                         <button
                           onClick={() => onViewResult(attempt!, exam)}
-                          className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                          className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                         >
                           <Eye className="w-4 h-4 text-slate-600" />
                           <span>Lihat Bukti Pengumpulan</span>
@@ -198,7 +198,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                     ) : isInProgress ? (
                       <button
                         onClick={() => onStartExam(exam.exam_id)}
-                        className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                        className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                       >
                         <Play className="w-4 h-4 fill-white" />
                         <span>Lanjutkan Pengerjaan Ujian</span>
@@ -206,7 +206,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                     ) : (
                       <button
                         onClick={() => handleOpenConfirm(exam)}
-                        className="w-full py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/20 transition-all cursor-pointer"
+                        className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/20 transition-all cursor-pointer"
                       >
                         <span>Mulai Kerjakan Ujian</span>
                         <ArrowRight className="w-4 h-4" />

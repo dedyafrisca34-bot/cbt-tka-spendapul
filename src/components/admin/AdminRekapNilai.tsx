@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Download, Search, FileText, CheckCircle2, XCircle, X, Printer, Filter, AlertOctagon } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Download, Search, FileText, CheckCircle2, XCircle, X, Printer, Filter, AlertOctagon, RefreshCw } from 'lucide-react';
 import { ExamReport, ExamAttempt } from '../../types/cbt';
 import { StorageService } from '../../services/storageService';
 
@@ -29,6 +29,65 @@ export const AdminRekapNilai: React.FC = () => {
   const [customJabatanProktor, setCustomJabatanProktor] = useState(settings.jabatanProktor || 'Guru Pengampu / Proktor CBT');
   const [customTempat, setCustomTempat] = useState(settings.tempatCetak || 'Pulung, Ponorogo');
   const [customAlamat, setCustomAlamat] = useState(settings.alamatSekolah || 'Jl. Raya Pulung, Desa Kesugihan, Kec. Pulung, Kabupaten Ponorogo, Jawa Timur 63492');
+
+  // Remote live sync state from Google Spreadsheet
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<string>(() => new Date().toLocaleTimeString('id-ID'));
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+
+  // Auto-sync runner
+  const runSync = async (silent = false) => {
+    if (!silent) setIsSyncing(true);
+    try {
+      const res = await StorageService.fetchRemoteReports();
+      if (res.success) {
+        setReports(StorageService.getReports());
+        setLastSyncTime(new Date().toLocaleTimeString('id-ID'));
+        if (!silent) {
+          setSyncStatus({
+            type: 'success',
+            message: `Sinkronisasi berhasil! ${res.count} data nilai siswa telah diperbarui dari Google Spreadsheet.`,
+          });
+          setTimeout(() => setSyncStatus(null), 5000);
+        }
+      } else if (!silent) {
+        setSyncStatus({
+          type: 'error',
+          message: res.error || 'Gagal menarik nilai dari Google Spreadsheet.',
+        });
+        setTimeout(() => setSyncStatus(null), 7000);
+      }
+    } finally {
+      if (!silent) setIsSyncing(false);
+    }
+  };
+
+  // Automatic real-time background sync (every 10 seconds & on window focus)
+  useEffect(() => {
+    // Initial fetch on mount
+    runSync(true);
+
+    if (!autoSyncEnabled) return;
+
+    // Refresh every 10 seconds automatically while the teacher is viewing the page
+    const timer = setInterval(() => {
+      runSync(true);
+    }, 10000);
+
+    // Also refresh immediately when the teacher returns to this browser tab
+    const onFocus = () => runSync(true);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [autoSyncEnabled]);
+
+  const handleSyncScoresFromSpreadsheet = () => {
+    runSync(false);
+  };
 
   const handleSaveSignatures = () => {
     const updated = {
@@ -130,8 +189,36 @@ export const AdminRekapNilai: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Real-time Live Status Indicator */}
+          <div
+            onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+            title="Sinkronisasi otomatis berjalan tiap 10 detik di latar belakang. Klik untuk menjeda atau mengaktifkan kembali."
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs cursor-pointer hover:bg-emerald-100/70 transition-colors shadow-xs"
+          >
+            <div className={`w-2.5 h-2.5 rounded-full ${autoSyncEnabled ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'} shrink-0`} />
+            <span className="font-semibold text-[11px]">
+              {autoSyncEnabled ? 'Otomatis Sync Live (10s)' : 'Sync Dijeda'}
+            </span>
+            <span className="text-[10px] text-emerald-600 font-mono hidden sm:inline">
+              ({lastSyncTime})
+            </span>
+          </div>
+
+          {/* Manual Refresh Button */}
+          <button
+            type="button"
+            onClick={handleSyncScoresFromSpreadsheet}
+            disabled={isSyncing}
+            className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-60 shadow-xs"
+            title="Klik jika ingin memaksa refresh nilai seketika tanpa menunggu 10 detik"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-indigo-600' : 'text-indigo-600'}`} />
+            <span>{isSyncing ? 'Menarik...' : 'Refresh Manual'}</span>
+          </button>
+
           {/* Print PDF Button */}
           <button
+            type="button"
             onClick={() => {
               setPdfClassFilter(filterKelas === 'all' ? '9A' : filterKelas);
               setIsPdfModalOpen(true);
@@ -144,6 +231,7 @@ export const AdminRekapNilai: React.FC = () => {
 
           {/* Export CSV Button */}
           <button
+            type="button"
             onClick={handleExportCsv}
             className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/25 transition-all cursor-pointer"
           >
@@ -152,6 +240,24 @@ export const AdminRekapNilai: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Sync Status Banner */}
+      {syncStatus && (
+        <div
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2 border animate-in fade-in ${
+            syncStatus.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          {syncStatus.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertOctagon className="w-4 h-4 text-amber-600 shrink-0" />
+          )}
+          <span className="flex-1">{syncStatus.message}</span>
+        </div>
+      )}
 
       {/* Quick Per-Class Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">

@@ -140,11 +140,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
         <div className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:24px_24px] opacity-10" />
       </div>
 
-      {/* Main Login Split Box matching reference design */}
-      <div className="relative z-10 w-full max-w-5xl mx-4 my-8 bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[580px] border border-slate-100">
+      {/* Main Login Split Box */}
+      <div className="relative z-10 w-full max-w-5xl mx-3 sm:mx-4 my-3 sm:my-8 bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-auto lg:min-h-[580px] border border-slate-100">
         
-        {/* Left Side: School Atmosphere Branding */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-sky-600 via-blue-700 to-indigo-900 p-8 sm:p-10 flex flex-col justify-between text-white relative overflow-hidden">
+        {/* Left Side: School Atmosphere Branding (Desktop only) */}
+        <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-sky-600 via-blue-700 to-indigo-900 p-8 sm:p-10 flex-col justify-between text-white relative overflow-hidden">
           {/* Subtle light accents */}
           <div className="absolute -top-24 -left-24 w-72 h-72 bg-sky-400/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -188,8 +188,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
           </div>
         </div>
 
-        {/* Right Side: Login Form (Matching Mockup exactly) */}
-        <div className="lg:col-span-7 p-8 sm:p-12 flex flex-col justify-center bg-white">
+        {/* Right Side: Login Form */}
+        <div className="lg:col-span-7 p-6 sm:p-12 flex flex-col justify-center bg-white">
           <div className="max-w-md w-full mx-auto">
             
             {/* Header Lockup */}

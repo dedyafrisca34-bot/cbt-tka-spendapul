@@ -49,9 +49,9 @@ export const SchoolLogo: React.FC<SchoolLogoProps> = ({
       </div>
 
       {showText && (
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <span
-            className={`font-bold tracking-tight text-base leading-tight ${
+            className={`font-bold tracking-tight text-xs sm:text-base leading-tight truncate ${
               lightText ? 'text-white' : 'text-slate-900'
             }`}
           >
@@ -59,7 +59,7 @@ export const SchoolLogo: React.FC<SchoolLogoProps> = ({
           </span>
           {subtext && (
             <span
-              className={`text-xs ${
+              className={`text-[10px] sm:text-xs truncate max-w-[160px] sm:max-w-none ${
                 lightText ? 'text-sky-200' : 'text-slate-500'
               }`}
             >

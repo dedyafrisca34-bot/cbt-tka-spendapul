@@ -25,21 +25,21 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       {/* Header */}
       <header className="bg-sky-800 text-white shadow-md">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <SchoolLogo size={38} showText={true} lightText={true} subtext="Hasil Pengerjaan CBT" />
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+          <SchoolLogo size={32} showText={true} lightText={true} subtext="Hasil CBT" />
           <button
             onClick={onBackToHome}
-            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="min-h-[38px] px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Kembali ke Beranda</span>
+            <span>Beranda</span>
           </button>
         </div>
       </header>
 
       {/* Main card */}
-      <main className="max-w-2xl mx-auto px-4 py-10 w-full flex-1 flex flex-col justify-center">
-        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-lg border border-slate-200 text-center relative overflow-hidden">
+      <main className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-10 w-full flex-1 flex flex-col justify-center">
+        <div className="bg-white rounded-3xl p-5 sm:p-10 shadow-lg border border-slate-200 text-center relative overflow-hidden">
           
           <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-sm">
             <CheckCircle2 className="w-9 h-9" />
