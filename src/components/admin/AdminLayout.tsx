@@ -81,7 +81,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   SMP Negeri 2 Pulung
                 </div>
                 <div className="text-[11px] text-sky-300">
-                  CBT TKA · Admin Guru
+                  CBT Tryout TKA · Admin Guru
                 </div>
               </div>
             </div>
@@ -145,7 +145,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <Menu className="w-5 h-5" />
             </button>
             <div className="hidden sm:block text-xs text-slate-500 font-medium">
-              SMP Negeri 2 Pulung · Panel Pengelolaan CBT TKA
+              SMP Negeri 2 Pulung · Panel Pengelolaan CBT Tryout TKA
             </div>
           </div>
 
@@ -166,6 +166,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>
+
+        {/* Admin Footer */}
+        <footer className="py-3 px-4 sm:px-6 text-center text-xs text-slate-400 border-t border-slate-200/70 bg-white/60 space-y-0.5">
+          <div>SMP Negeri 2 Pulung · Panel Pengelolaan CBT Tryout TKA</div>
+          <div className="text-[10px] text-slate-400">Dedy Andika Afrisca, S.Kom</div>
+        </footer>
       </div>
 
     </div>

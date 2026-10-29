@@ -37,7 +37,7 @@ export const AdminCetakKartu: React.FC<AdminCetakKartuProps> = ({ onBackToDataSi
   const [layoutMode, setLayoutMode] = useState<CardLayoutType>('8');
 
   // Customization Options for the printed cards
-  const [judulUjian, setJudulUjian] = useState('TES KEMAMPUAN AKADEMIK (TKA) KELAS IX');
+  const [judulUjian, setJudulUjian] = useState('TRYOUT TES KEMAMPUAN AKADEMIK (TKA) KELAS IX');
   const [tahunPelajaran, setTahunPelajaran] = useState(settings.tahunPelajaran || '2024/2025');
   const [ruangUjian, setRuangUjian] = useState('Lab CBT');
   const [sesiUjian, setSesiUjian] = useState('Sesi Terjadwal');

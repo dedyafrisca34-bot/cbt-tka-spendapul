@@ -141,8 +141,9 @@ export const ExamResultView: React.FC<ExamResultViewProps> = ({
         </div>
       </main>
 
-      <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-        SMP Negeri 2 Pulung · Berkarakter • Berprestasi • Maju
+      <footer className="bg-white border-t border-slate-200 py-3.5 text-center text-xs text-slate-500 space-y-0.5">
+        <div>SMP Negeri 2 Pulung · Berkarakter • Berprestasi • Maju</div>
+        <div className="text-[10px] text-slate-400">Dedy Andika Afrisca, S.Kom</div>
       </footer>
     </div>
   );

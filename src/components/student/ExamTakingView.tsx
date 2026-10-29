@@ -303,7 +303,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
                 SMPN 2 Pulung
               </div>
               <div className="text-[10px] sm:text-xs text-sky-200 hidden sm:block">
-                CBT TKA - Kelas IX
+                CBT Tryout TKA - Kelas IX
               </div>
             </div>
           </div>

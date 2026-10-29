@@ -205,10 +205,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
               </p>
               
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                CBT TKA
+                CBT Tryout TKA
               </h1>
               <p className="text-sm font-semibold text-sky-700">
-                Tes Kemampuan Akademik Kelas IX
+                Tryout Tes Kemampuan Akademik Kelas IX
               </p>
               <p className="text-xs text-slate-500 mt-1">
                 Silakan login untuk melanjutkan ujian.
@@ -293,8 +293,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onStudentLogin, onAdminLog
               </div>
             </div>
 
-            <div className="mt-6 text-center text-[11px] text-slate-400">
-              SMP Negeri 2 Pulung · CBT Tes Kemampuan Akademik (TKA)
+            <div className="mt-6 text-center text-[11px] text-slate-400 space-y-0.5">
+              <div>SMP Negeri 2 Pulung · CBT Tryout Tes Kemampuan Akademik (TKA)</div>
+              <div className="text-[10px] text-slate-400/80">Dedy Andika Afrisca, S.Kom</div>
             </div>
           </div>
         </div>

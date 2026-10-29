@@ -92,7 +92,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       <header className="bg-sky-800 text-white shadow-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <SchoolLogo size={34} showText={true} lightText={true} subtext="CBT TKA · Kelas IX" />
+            <SchoolLogo size={34} showText={true} lightText={true} subtext="CBT Tryout TKA · Kelas IX" />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
@@ -229,7 +229,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">{exam.judul}</h3>
                     <p className="text-xs text-slate-500 mt-1 leading-normal">
-                      Tes Kemampuan Akademik (TKA) Standar Kelulusan SMPN 2 Pulung
+                      Tryout Tes Kemampuan Akademik (TKA) Standar Kelulusan SMPN 2 Pulung
                     </p>
 
                     <div className="grid grid-cols-2 gap-2 mt-4 sm:mt-5 py-3 border-y border-slate-100 text-[11px] sm:text-xs text-slate-600">
@@ -329,7 +329,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-5 text-xs text-sky-900 space-y-2">
           <h4 className="font-bold text-sm text-sky-950 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-sky-700" />
-            <span>Petunjuk Penting Pelaksanaan CBT TKA:</span>
+            <span>Petunjuk Penting Pelaksanaan CBT Tryout TKA:</span>
           </h4>
           <ul className="list-disc list-inside space-y-1 text-slate-700 leading-relaxed pl-1">
             <li>Siswa hanya diperkenankan menggunakan 1 perangkat selama ujian berlangsung.</li>
@@ -402,8 +402,9 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       )}
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-        SMP Negeri 2 Pulung · CBT Tes Kemampuan Akademik (TKA) Kelas IX
+      <footer className="bg-white border-t border-slate-200 py-3.5 text-center text-xs text-slate-500 space-y-0.5">
+        <div>SMP Negeri 2 Pulung · CBT Tryout Tes Kemampuan Akademik (TKA) Kelas IX</div>
+        <div className="text-[10px] text-slate-400">Dedy Andika Afrisca, S.Kom</div>
       </footer>
     </div>
   );

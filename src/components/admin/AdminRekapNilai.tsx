@@ -577,7 +577,7 @@ export const AdminRekapNilai: React.FC = () => {
                     {settings.alamatSekolah || 'Jl. Raya Pulung, Desa Kesugihan, Kec. Pulung, Kabupaten Ponorogo, Jawa Timur 63492'}
                   </p>
                   <p className="text-[10px] font-sans text-slate-500 leading-tight">
-                    Website: {settings.namaSekolah.toLowerCase().replace(/\s+/g, '')}.sch.id · CBT TKA Kelas IX
+                    Website: {settings.namaSekolah.toLowerCase().replace(/\s+/g, '')}.sch.id · CBT Tryout TKA Kelas IX
                   </p>
                 </div>
 
