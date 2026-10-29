@@ -1,10 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Eye, Edit2, Trash2, X, Check, BookOpen, AlertCircle } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, X, Check, BookOpen, AlertCircle, UploadCloud, RefreshCw, CheckCircle, Database } from 'lucide-react';
 import { Question, Subject, CognitiveLevel, OptionKey } from '../../types/cbt';
 import { StorageService } from '../../services/storageService';
 
 export const AdminBankSoal: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>(() => StorageService.getQuestions());
+
+  // Cloud Sync State
+  const [isUploading, setIsUploading] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Filters
   const [filterMapel, setFilterMapel] = useState<string>('all');
@@ -87,9 +92,14 @@ export const AdminBankSoal: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus butir soal ini?')) {
+    if (confirm('Apakah Anda yakin ingin menghapus butir soal ini? Perubahan akan otomatis terhapus dari Spreadsheet & HP siswa.')) {
       StorageService.deleteQuestion(id);
       setQuestions(StorageService.getQuestions());
+      setSyncFeedback({
+        type: 'success',
+        message: 'Soal berhasil dihapus dan disinkronkan ke Spreadsheet!',
+      });
+      setTimeout(() => setSyncFeedback(null), 4000);
     }
   };
 
@@ -119,6 +129,66 @@ export const AdminBankSoal: React.FC = () => {
     StorageService.saveQuestion(newQuestion);
     setQuestions(StorageService.getQuestions());
     setIsFormOpen(false);
+    setSyncFeedback({
+      type: 'success',
+      message: 'Soal berhasil disimpan dan otomatis disinkronkan ke Spreadsheet & HP siswa!',
+    });
+    setTimeout(() => setSyncFeedback(null), 4000);
+  };
+
+  // Upload all questions to Google Spreadsheet
+  const handleUploadAllToSpreadsheet = async () => {
+    setIsUploading(true);
+    setSyncFeedback(null);
+    try {
+      const res = await StorageService.uploadAllQuestionsToSpreadsheet(questions);
+      if (res.success) {
+        setSyncFeedback({
+          type: 'success',
+          message: `Berhasil! Seluruh ${questions.length} butir soal telah dikirim ke tab Sheet Soal Google Spreadsheet. Sekarang data di Spreadsheet dan Aplikasi sudah sama persis!`,
+        });
+      } else {
+        setSyncFeedback({
+          type: 'error',
+          message: res.message || 'Gagal mengirim soal ke Spreadsheet.',
+        });
+      }
+    } catch (err: unknown) {
+      setSyncFeedback({
+        type: 'error',
+        message: 'Terjadi kesalahan saat mengunggah soal: ' + String(err),
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Pull latest questions from Google Spreadsheet
+  const handlePullFromSpreadsheet = async () => {
+    setIsPulling(true);
+    setSyncFeedback(null);
+    try {
+      const res = await StorageService.fetchRemoteQuestions();
+      if (res.success && res.count > 0) {
+        setQuestions(StorageService.getQuestions());
+        setSyncFeedback({
+          type: 'success',
+          message: `Berhasil menarik ${res.count} butir soal terbaru dari Google Spreadsheet!`,
+        });
+      } else {
+        setSyncFeedback({
+          type: 'error',
+          message: res.error || 'Belum ada data soal di Spreadsheet atau sheet masih kosong.',
+        });
+      }
+    } catch (err: unknown) {
+      setSyncFeedback({
+        type: 'error',
+        message: 'Gagal menarik soal: ' + String(err),
+      });
+    } finally {
+      setIsPulling(false);
+    }
   };
 
   return (
@@ -131,18 +201,76 @@ export const AdminBankSoal: React.FC = () => {
             Bank Soal
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-            Kelola soal TKA untuk Matematika dan Bahasa Indonesia.
+            Kelola {questions.length} butir soal TKA Matematika dan Bahasa Indonesia terhubung Cloud Spreadsheet.
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreate}
-          className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/25 transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Soal</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Upload All 80 Questions Button */}
+          <button
+            type="button"
+            onClick={handleUploadAllToSpreadsheet}
+            disabled={isUploading}
+            className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/25 transition-all cursor-pointer disabled:opacity-60"
+            title="Kirim seluruh butir soal saat ini ke Sheet Soal di Spreadsheet agar data sama persis"
+          >
+            <UploadCloud className={`w-4 h-4 ${isUploading ? 'animate-bounce' : ''}`} />
+            <span>{isUploading ? 'Mengunggah ke Sheet...' : `Unggah ${questions.length} Soal ke Spreadsheet`}</span>
+          </button>
+
+          {/* Pull from Spreadsheet Button */}
+          <button
+            type="button"
+            onClick={handlePullFromSpreadsheet}
+            disabled={isPulling}
+            className="px-3.5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+            title="Tarik soal terbaru dari Google Spreadsheet jika diedit langsung di Spreadsheet"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? 'animate-spin text-indigo-600' : 'text-indigo-600'}`} />
+            <span>{isPulling ? 'Menarik...' : 'Tarik dari Spreadsheet'}</span>
+          </button>
+
+          {/* Add Question Button */}
+          <button
+            onClick={handleOpenCreate}
+            className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/25 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Soal</span>
+          </button>
+        </div>
       </div>
+
+      {/* Cloud Sync Status Banner */}
+      <div className="bg-sky-50/80 border border-sky-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-sky-950">
+        <div className="flex items-center gap-2.5">
+          <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping shrink-0" />
+          <div>
+            <span className="font-bold text-sky-900">Sinkronisasi Soal Lintas Perangkat Aktif: </span>
+            <span className="text-slate-600">
+              Setiap kali Anda menambah, mengedit, atau menghapus soal di sini, perubahan otomatis disinkronkan ke Google Spreadsheet dan langsung tampil pada HP siswa saat ujian dimulai.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Feedback Alert if any */}
+      {syncFeedback && (
+        <div
+          className={`p-4 rounded-2xl border text-xs flex items-start gap-3 animate-in fade-in duration-200 ${
+            syncFeedback.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-red-50 border-red-200 text-red-900'
+          }`}
+        >
+          {syncFeedback.type === 'success' ? (
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+          )}
+          <span className="font-medium">{syncFeedback.message}</span>
+        </div>
+      )}
 
       {/* Filter Bar matching mockup */}
       <div className="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">

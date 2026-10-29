@@ -242,33 +242,219 @@ export const StorageService = {
       list.unshift(question);
     }
     localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(list));
+
+    // Auto-sync to Google Spreadsheet in background
+    this.syncSingleQuestion(question).catch(() => {});
   },
 
   deleteQuestion(questionId: string) {
     const list = this.getQuestions().filter((q) => q.question_id !== questionId);
     localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(list));
+
+    // Auto-delete from Google Spreadsheet in background
+    this.deleteRemoteQuestion(questionId).catch(() => {});
+  },
+
+  // Pull remote questions from Google Spreadsheet (so student phones update automatically)
+  async fetchRemoteQuestions(): Promise<{ success: boolean; count: number; error?: string }> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return { success: false, count: 0, error: 'Endpoint belum disetel.' };
+
+      const resp = await fetch(`${endpoint}?action=getQuestions`);
+      if (!resp.ok) return { success: false, count: 0, error: `HTTP ${resp.status}` };
+      const data = await resp.json();
+      if (data && data.success && Array.isArray(data.questions) && data.questions.length > 0) {
+        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(data.questions));
+        return { success: true, count: data.questions.length };
+      }
+      return { success: false, count: 0, error: data?.message || 'Data soal di Spreadsheet masih kosong.' };
+    } catch (err: unknown) {
+      return { success: false, count: 0, error: String(err) };
+    }
+  },
+
+  // Batch upload questions to Google Spreadsheet
+  async uploadAllQuestionsToSpreadsheet(questionsToUpload?: Question[]): Promise<{ success: boolean; message: string }> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      const list = questionsToUpload || this.getQuestions();
+      if (!endpoint) return { success: false, message: 'Endpoint belum disetel.' };
+
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'syncQuestions',
+          questions: list,
+        }),
+        mode: 'no-cors',
+      });
+
+      return {
+        success: true,
+        message: `Berhasil mengirim ${list.length} butir soal ke Google Spreadsheet!`,
+      };
+    } catch (err: unknown) {
+      return { success: false, message: String(err) };
+    }
+  },
+
+  // Save single question to Spreadsheet
+  async syncSingleQuestion(question: Question): Promise<void> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return;
+
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveQuestion',
+          question,
+        }),
+        mode: 'no-cors',
+      });
+    } catch (_) {}
+  },
+
+  // Delete single question from Spreadsheet
+  async deleteRemoteQuestion(questionId: string): Promise<void> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return;
+
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteQuestion',
+          question_id: questionId,
+        }),
+        mode: 'no-cors',
+      });
+    } catch (_) {}
   },
 
   // Exams
   getExams(): Exam[] {
     this.init();
-    return safeParse<Exam[]>(localStorage.getItem(KEYS.EXAMS), INITIAL_EXAMS);
+    const stored = safeParse<Exam[]>(localStorage.getItem(KEYS.EXAMS), INITIAL_EXAMS);
+    // Deduplicate strictly by mapel so there are always exactly 2 official subjects
+    const mapelMap = new Map<string, Exam>();
+    for (const e of stored) {
+      if (!mapelMap.has(e.mapel)) {
+        mapelMap.set(e.mapel, e);
+      }
+    }
+    const deduplicated = Array.from(mapelMap.values());
+    if (deduplicated.length !== stored.length) {
+      localStorage.setItem(KEYS.EXAMS, JSON.stringify(deduplicated));
+    }
+    return deduplicated;
   },
 
   saveExam(exam: Exam) {
     const list = this.getExams();
-    const idx = list.findIndex((e) => e.exam_id === exam.exam_id);
+    const idx = list.findIndex((e) => e.exam_id === exam.exam_id || e.mapel === exam.mapel);
     if (idx >= 0) {
       list[idx] = exam;
     } else {
       list.push(exam);
     }
     localStorage.setItem(KEYS.EXAMS, JSON.stringify(list));
+
+    // Auto-sync exam settings to Google Spreadsheet
+    this.syncExamToSpreadsheet(exam).catch(() => {});
   },
 
   deleteExam(examId: string) {
     const list = this.getExams().filter((e) => e.exam_id !== examId);
     localStorage.setItem(KEYS.EXAMS, JSON.stringify(list));
+  },
+
+  // Pull remote exams from Google Spreadsheet
+  async fetchRemoteExams(): Promise<{ success: boolean; count: number; error?: string }> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return { success: false, count: 0, error: 'Endpoint belum disetel.' };
+
+      const resp = await fetch(`${endpoint}?action=getExams`);
+      if (!resp.ok) return { success: false, count: 0, error: `HTTP ${resp.status}` };
+      const data = await resp.json();
+      if (data && data.success && Array.isArray(data.exams) && data.exams.length > 0) {
+        const localExams = this.getExams();
+        const allQuestions = this.getQuestions();
+        
+        // Merge & deduplicate strictly by mapel
+        const finalExams: Exam[] = [];
+        const seenMapel = new Set<string>();
+
+        // Remote exams take precedence for status, schedule, and duration
+        for (const remote of data.exams) {
+          const mapel = remote.mapel || (remote.judul?.toLowerCase().includes('matematika') ? 'Matematika' : 'Bahasa Indonesia');
+          if (seenMapel.has(mapel)) continue;
+          seenMapel.add(mapel);
+
+          const localMatch = localExams.find((l) => l.mapel === mapel || l.exam_id === remote.exam_id);
+          const qIds = allQuestions.filter((q) => q.mapel === mapel && q.aktif).map((q) => q.question_id);
+
+          finalExams.push({
+            exam_id: remote.exam_id || localMatch?.exam_id || (mapel === 'Matematika' ? 'exam_01' : 'exam_02'),
+            judul: remote.judul || localMatch?.judul || `TKA ${mapel} Kelas IX`,
+            mapel: mapel,
+            durasi_menit: Number(remote.durasi_menit || localMatch?.durasi_menit || 90),
+            mulai_at: remote.mulai_at || localMatch?.mulai_at || '08:00',
+            selesai_at: remote.selesai_at || localMatch?.selesai_at || '10:00',
+            jumlah_soal: Number(remote.jumlah_soal || localMatch?.jumlah_soal || 40),
+            acak_soal: remote.acak_soal !== undefined ? Boolean(remote.acak_soal) : Boolean(localMatch?.acak_soal),
+            acak_opsi: false,
+            tampilkan_nilai: remote.tampilkan_nilai !== undefined ? Boolean(remote.tampilkan_nilai) : true,
+            status: (remote.status as 'Belum Dimulai' | 'Sedang Berlangsung' | 'Selesai') || localMatch?.status || 'Belum Dimulai',
+            tahun_pelajaran: '',
+            question_ids: qIds.length > 0 ? qIds : (localMatch?.question_ids || []),
+          });
+        }
+
+        // Add any missing local subject if not present in remote
+        for (const local of localExams) {
+          if (!seenMapel.has(local.mapel)) {
+            seenMapel.add(local.mapel);
+            finalExams.push(local);
+          }
+        }
+
+        localStorage.setItem(KEYS.EXAMS, JSON.stringify(finalExams));
+        return { success: true, count: finalExams.length };
+      }
+      return { success: false, count: 0, error: data?.message || 'Data ujian di Spreadsheet kosong.' };
+    } catch (err: unknown) {
+      return { success: false, count: 0, error: String(err) };
+    }
+  },
+
+  // Sync single exam setting to Spreadsheet
+  async syncExamToSpreadsheet(exam: Exam): Promise<void> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return;
+
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveExam',
+          exam,
+        }),
+        mode: 'no-cors',
+      });
+    } catch (_) {}
   },
 
   // Attempts
@@ -312,9 +498,20 @@ export const StorageService = {
     if (examQuestions.length === 0) {
       examQuestions = allQuestions.filter((q) => q.mapel === exam.mapel && q.aktif);
     }
+    // Limit to exam.jumlah_soal if specified
+    if (exam.jumlah_soal && examQuestions.length > exam.jumlah_soal) {
+      examQuestions = examQuestions.slice(0, exam.jumlah_soal);
+    }
 
     let attempt = this.getStudentAttempt(studentId, examId);
     if (!attempt) {
+      if (exam.status === 'Belum Dimulai') {
+        throw new Error('Ujian belum dimulai oleh proktor / pengawas.');
+      }
+      if (exam.status === 'Selesai') {
+        throw new Error('Sesi ujian ini telah ditutup / berakhir.');
+      }
+
       const now = new Date();
       const endTime = new Date(now.getTime() + exam.durasi_menit * 60 * 1000);
       attempt = {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LogOut, Clock, FileText, CheckCircle2, AlertTriangle, ArrowRight, Play, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogOut, Clock, FileText, CheckCircle2, AlertTriangle, ArrowRight, Play, Eye, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 import { SchoolLogo } from '../common/SchoolLogo';
 import { Student, Exam, ExamAttempt } from '../../types/cbt';
 import { StorageService } from '../../services/storageService';
@@ -19,8 +19,36 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 }) => {
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [exams, setExams] = useState<Exam[]>(() => StorageService.getExams());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const exams = StorageService.getExams();
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await StorageService.fetchRemoteExams();
+    } catch (_) {}
+    setExams(StorageService.getExams());
+    setTimeout(() => setIsRefreshing(false), 400);
+  };
+
+  // Automatically fetch latest questions and exams from Google Spreadsheet
+  // Uses staggered interval (10-15s) with per-device jitter to prevent network spikes when 140+ students are online
+  useEffect(() => {
+    handleRefresh();
+    StorageService.fetchRemoteQuestions().catch(() => {});
+
+    const jitter = Math.floor(Math.random() * 5000); // 0 - 5s jitter per device
+    const timer = setInterval(() => {
+      StorageService.fetchRemoteExams().then(() => {
+        setExams(StorageService.getExams());
+      }).catch(() => {
+        setExams(StorageService.getExams());
+      });
+    }, 10000 + jitter);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const attempts = StorageService.getAttempts();
 
   const getAttemptForExam = (examId: string) => {
@@ -96,12 +124,24 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
         {/* Exams Grid */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-sky-700" />
-              <span>Daftar Ujian Tersedia</span>
-            </h2>
-            <span className="text-xs text-slate-500 font-medium">TKA Kelas IX (Sembilan)</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-sky-700" />
+                <span>Daftar Ujian Tersedia</span>
+              </h2>
+              <span className="text-xs text-slate-500 font-medium">TKA Kelas IX (Sembilan) · SMPN 2 Pulung</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-sky-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Memeriksa...' : 'Periksa Status Ujian'}</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -109,6 +149,9 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               const attempt = getAttemptForExam(exam.exam_id);
               const isSubmitted = attempt?.status === 'Submitted';
               const isInProgress = attempt?.status === 'In Progress';
+              const isNotStarted = exam.status === 'Belum Dimulai';
+              const isFinished = exam.status === 'Selesai';
+              const isOngoing = exam.status === 'Sedang Berlangsung';
 
               return (
                 <div
@@ -122,7 +165,11 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                         ? 'bg-emerald-500'
                         : isInProgress
                         ? 'bg-amber-500'
-                        : 'bg-sky-600'
+                        : isOngoing
+                        ? 'bg-sky-600'
+                        : isFinished
+                        ? 'bg-slate-400'
+                        : 'bg-amber-400'
                     }`}
                   />
 
@@ -143,9 +190,20 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                           <Clock className="w-3.5 h-3.5 animate-pulse" />
                           <span>Sedang Dikerjakan</span>
                         </span>
+                      ) : isNotStarted ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 shrink-0">
+                          <Lock className="w-3.5 h-3.5 text-amber-700" />
+                          <span>Belum Dimulai</span>
+                        </span>
+                      ) : isFinished ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 shrink-0">
+                          <AlertCircle className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Selesai / Ditutup</span>
+                        </span>
                       ) : (
-                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md shrink-0">
-                          {exam.status}
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 shrink-0">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Sedang Berlangsung</span>
                         </span>
                       )}
                     </div>
@@ -203,7 +261,36 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                         <Play className="w-4 h-4 fill-white" />
                         <span>Lanjutkan Pengerjaan Ujian</span>
                       </button>
+                    ) : isNotStarted ? (
+                      /* Belum Dimulai: Terkunci, siswa tidak bisa mengerjakan */
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                        >
+                          <Lock className="w-4 h-4 text-slate-400" />
+                          <span>Ujian Belum Dibuka (Terkunci)</span>
+                        </button>
+                        <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 flex items-start gap-1.5 leading-snug">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>
+                            Ujian belum dimulai oleh proktor. Tombol akan aktif otomatis saat status ujian diaktifkan menjadi <strong>Sedang Berlangsung</strong>.
+                          </span>
+                        </div>
+                      </div>
+                    ) : isFinished ? (
+                      /* Selesai: Ditutup */
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                      >
+                        <AlertCircle className="w-4 h-4 text-slate-400" />
+                        <span>Ujian Telah Ditutup / Berakhir</span>
+                      </button>
                     ) : (
+                      /* Sedang Berlangsung: Siswa dapat mulai mengerjakan */
                       <button
                         onClick={() => handleOpenConfirm(exam)}
                         className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/20 transition-all cursor-pointer"

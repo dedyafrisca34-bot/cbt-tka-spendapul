@@ -211,6 +211,14 @@ function doGet(e) {
       return getExamsHandler();
     }
 
+    if (action === 'getQuestions') {
+      return getQuestionsHandler();
+    }
+
+    if (action === 'deleteQuestion') {
+      return deleteQuestionHandler(params.question_id);
+    }
+
     if (action === 'getExamQuestionsForStudent') {
       const examId = params.exam_id;
       return getExamQuestionsForStudentHandler(examId);
@@ -252,6 +260,26 @@ function doPost(e) {
       }
     }
     const action = data.action || '';
+
+    if (action === 'syncQuestions') {
+      return syncQuestionsHandler(data);
+    }
+
+    if (action === 'saveQuestion') {
+      return saveQuestionHandler(data.question);
+    }
+
+    if (action === 'deleteQuestion') {
+      return deleteQuestionHandler(data.question_id);
+    }
+
+    if (action === 'syncExams') {
+      return syncExamsHandler(data);
+    }
+
+    if (action === 'saveExam') {
+      return saveExamHandler(data.exam);
+    }
 
     if (action === 'studentLogin') {
       return studentLoginHandler(data);
@@ -473,6 +501,232 @@ function getExamQuestionsForStudentHandler(examId) {
   }
 
   return createJsonResponse({ success: true, questions: questions });
+}
+
+function getQuestionsHandler() {
+  const ss = getDbSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.SOAL);
+  if (!sheet) {
+    return createJsonResponse({ success: true, total: 0, questions: [] });
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const questions = [];
+  // Baris 1: question_id | mapel | topik | teks_soal | gambar_url | opsi_a | opsi_b | opsi_c | opsi_d | kunci | pembahasan | aktif
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const qId = String(row[0] || '').trim();
+    if (!qId) continue;
+    questions.push({
+      question_id: qId,
+      mapel: String(row[1] || 'Matematika').trim(),
+      topik: String(row[2] || '').trim(),
+      level: 'C2',
+      teks_soal: String(row[3] || ''),
+      gambar_url: String(row[4] || ''),
+      opsi_a: String(row[5] || ''),
+      opsi_b: String(row[6] || ''),
+      opsi_c: String(row[7] || ''),
+      opsi_d: String(row[8] || ''),
+      kunci: String(row[9] || 'A').trim().toUpperCase(),
+      pembahasan: String(row[10] || ''),
+      aktif: row[11] !== false && String(row[11]).toUpperCase() !== 'FALSE'
+    });
+  }
+
+  return createJsonResponse({ success: true, total: questions.length, questions: questions });
+}
+
+function syncQuestionsHandler(data) {
+  const incoming = data.questions || [];
+  if (!Array.isArray(incoming) || incoming.length === 0) {
+    return createJsonResponse({ success: false, message: 'Data soal kosong.' });
+  }
+
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.SOAL);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.SOAL);
+  }
+
+  // Bersihkan data lama kecuali header
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+  }
+
+  const headers = ['question_id', 'mapel', 'topik', 'teks_soal', 'gambar_url', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'kunci', 'pembahasan', 'aktif'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+
+  const rowsToInsert = incoming.map(function(q) {
+    return [
+      q.question_id || ('q_' + Utilities.getUuid().slice(0, 8)),
+      q.mapel || 'Matematika',
+      q.topik || '',
+      q.teks_soal || '',
+      q.gambar_url || '',
+      q.opsi_a || '',
+      q.opsi_b || '',
+      q.opsi_c || '',
+      q.opsi_d || '',
+      q.kunci || 'A',
+      q.pembahasan || '',
+      q.aktif !== false
+    ];
+  });
+
+  if (rowsToInsert.length > 0) {
+    sheet.getRange(2, 1, rowsToInsert.length, headers.length).setValues(rowsToInsert);
+  }
+
+  return createJsonResponse({
+    success: true,
+    message: 'Berhasil mengunggah ' + rowsToInsert.length + ' butir soal ke Spreadsheet!',
+    total: rowsToInsert.length
+  });
+}
+
+function saveQuestionHandler(q) {
+  if (!q) return createJsonResponse({ success: false, message: 'Data soal tidak valid.' });
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.SOAL);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.SOAL);
+  }
+
+  const qId = String(q.question_id || '').trim();
+  const rows = sheet.getDataRange().getValues();
+  let foundRow = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === qId) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  const rowData = [
+    qId || ('q_' + Utilities.getUuid().slice(0, 8)),
+    q.mapel || 'Matematika',
+    q.topik || '',
+    q.teks_soal || '',
+    q.gambar_url || '',
+    q.opsi_a || '',
+    q.opsi_b || '',
+    q.opsi_c || '',
+    q.opsi_d || '',
+    q.kunci || 'A',
+    q.pembahasan || '',
+    q.aktif !== false
+  ];
+
+  if (foundRow > 0) {
+    sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+
+  return createJsonResponse({ success: true, message: 'Soal berhasil disimpan ke Spreadsheet.' });
+}
+
+function deleteQuestionHandler(questionId) {
+  if (!questionId) return createJsonResponse({ success: false, message: 'ID soal wajib diisi.' });
+  const ss = getDbSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.SOAL);
+  if (!sheet) return createJsonResponse({ success: false, message: 'Sheet Soal tidak ditemukan.' });
+
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(questionId).trim()) {
+      sheet.deleteRow(i + 1);
+      return createJsonResponse({ success: true, message: 'Soal berhasil dihapus dari Spreadsheet.' });
+    }
+  }
+  return createJsonResponse({ success: false, message: 'Soal tidak ditemukan di Spreadsheet.' });
+}
+
+function syncExamsHandler(data) {
+  const incoming = data.exams || [];
+  if (!Array.isArray(incoming) || incoming.length === 0) {
+    return createJsonResponse({ success: false, message: 'Data ujian kosong.' });
+  }
+
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.UJIAN);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.UJIAN);
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+  }
+
+  const headers = ['exam_id', 'judul', 'mapel', 'durasi_menit', 'mulai_at', 'selesai_at', 'jumlah_soal', 'acak_soal', 'acak_opsi', 'tampilkan_nilai', 'status'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+
+  const rowsToInsert = incoming.map(function(e) {
+    return [
+      e.exam_id,
+      e.judul || '',
+      e.mapel || '',
+      e.durasi_menit || 90,
+      e.mulai_at || '',
+      e.selesai_at || '',
+      e.jumlah_soal || 40,
+      e.acak_soal !== false,
+      e.acak_opsi !== false,
+      e.tampilkan_nilai || false,
+      e.status || 'Sedang Berlangsung'
+    ];
+  });
+
+  if (rowsToInsert.length > 0) {
+    sheet.getRange(2, 1, rowsToInsert.length, headers.length).setValues(rowsToInsert);
+  }
+
+  return createJsonResponse({ success: true, message: 'Pengaturan ujian berhasil disinkronkan ke Spreadsheet!' });
+}
+
+function saveExamHandler(exam) {
+  if (!exam) return createJsonResponse({ success: false, message: 'Data ujian tidak valid.' });
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.UJIAN);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.UJIAN);
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  let foundRow = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(exam.exam_id).trim()) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  const rowData = [
+    exam.exam_id,
+    exam.judul || '',
+    exam.mapel || '',
+    exam.durasi_menit || 90,
+    exam.mulai_at || '',
+    exam.selesai_at || '',
+    exam.jumlah_soal || 40,
+    exam.acak_soal !== false,
+    exam.acak_opsi !== false,
+    exam.tampilkan_nilai || false,
+    exam.status || 'Sedang Berlangsung'
+  ];
+
+  if (foundRow > 0) {
+    sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+
+  return createJsonResponse({ success: true, message: 'Ujian berhasil diperbarui di Spreadsheet.' });
 }
 
 function saveAnswerHandler(data) {
