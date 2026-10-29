@@ -51,6 +51,25 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
   const attempts = StorageService.getAttempts();
 
+  // Strictly deduplicate exams so only 1 Matematika and 1 Bahasa Indonesia appear
+  const displayedExams = React.useMemo(() => {
+    const map = new Map<string, Exam>();
+    for (const e of exams) {
+      const canonicalKey = e.mapel?.toLowerCase().includes('matematika')
+        ? 'Matematika'
+        : 'Bahasa Indonesia';
+      if (!map.has(canonicalKey)) {
+        map.set(canonicalKey, {
+          ...e,
+          exam_id: canonicalKey === 'Matematika' ? 'exam_01' : 'exam_02',
+          judul: `TKA ${canonicalKey} Kelas IX`,
+          mapel: canonicalKey as any,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [exams]);
+
   const getAttemptForExam = (examId: string) => {
     return attempts.find((a) => a.student_id === student.student_id && a.exam_id === examId);
   };
@@ -145,7 +164,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {exams.map((exam) => {
+            {displayedExams.map((exam) => {
               const attempt = getAttemptForExam(exam.exam_id);
               const isSubmitted = attempt?.status === 'Submitted';
               const isInProgress = attempt?.status === 'In Progress';

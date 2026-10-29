@@ -20,6 +20,25 @@ export const AdminUjian: React.FC = () => {
     handleRefresh();
   }, []);
 
+  // Guarantee strictly 2 official subjects without duplicate rows
+  const displayedExams = React.useMemo(() => {
+    const map = new Map<string, Exam>();
+    for (const e of exams) {
+      const canonicalKey = e.mapel?.toLowerCase().includes('matematika')
+        ? 'Matematika'
+        : 'Bahasa Indonesia';
+      if (!map.has(canonicalKey)) {
+        map.set(canonicalKey, {
+          ...e,
+          exam_id: canonicalKey === 'Matematika' ? 'exam_01' : 'exam_02',
+          judul: `TKA ${canonicalKey} Kelas IX`,
+          mapel: canonicalKey as Subject,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }, [exams]);
+
   // Quick toggle status without opening form
   const handleQuickStatus = (exam: Exam, newStatus: 'Belum Dimulai' | 'Sedang Berlangsung' | 'Selesai') => {
     const updated: Exam = { ...exam, status: newStatus };
@@ -164,7 +183,7 @@ export const AdminUjian: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {exams.map((exam, idx) => (
+              {displayedExams.map((exam, idx) => (
                 <tr key={exam.exam_id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 text-center font-mono text-slate-500">{idx + 1}</td>
                   <td className="py-3.5 px-5 font-bold text-slate-900">{exam.judul}</td>

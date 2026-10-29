@@ -3,7 +3,7 @@
  * Provides persistent local state, realistic evaluations, server-clock simulation, and export utilities.
  */
 
-import { Student, Question, Exam, ExamAttempt, ExamReport, OptionKey } from '../types/cbt';
+import { Student, Question, Exam, ExamAttempt, ExamReport, OptionKey, Subject } from '../types/cbt';
 import { INITIAL_STUDENTS, INITIAL_QUESTIONS, INITIAL_EXAMS, INITIAL_ATTEMPTS } from '../data/initialData';
 
 const KEYS = {
@@ -134,9 +134,26 @@ export const StorageService = {
     if (!localStorage.getItem(KEYS.QUESTIONS)) {
       localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
     }
-    if (!localStorage.getItem(KEYS.EXAMS)) {
-      localStorage.setItem(KEYS.EXAMS, JSON.stringify(INITIAL_EXAMS));
+    
+    // Always clean up and strictly deduplicate exams in localStorage to ensure exactly 2 official subjects
+    const existingExams = safeParse<Exam[]>(localStorage.getItem(KEYS.EXAMS), INITIAL_EXAMS);
+    const uniqueExamsMap = new Map<string, Exam>();
+    for (const e of existingExams) {
+      const canonicalKey = e.mapel?.toLowerCase().includes('matematika')
+        ? 'Matematika'
+        : 'Bahasa Indonesia';
+      if (!uniqueExamsMap.has(canonicalKey)) {
+        uniqueExamsMap.set(canonicalKey, {
+          ...e,
+          exam_id: canonicalKey === 'Matematika' ? 'exam_01' : 'exam_02',
+          judul: `TKA ${canonicalKey} Kelas IX`,
+          mapel: canonicalKey as Subject,
+        });
+      }
     }
+    const cleanExamsList = Array.from(uniqueExamsMap.values());
+    localStorage.setItem(KEYS.EXAMS, JSON.stringify(cleanExamsList));
+
     if (!localStorage.getItem(KEYS.SETTINGS)) {
       localStorage.setItem(KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
     } else {
@@ -344,17 +361,23 @@ export const StorageService = {
   getExams(): Exam[] {
     this.init();
     const stored = safeParse<Exam[]>(localStorage.getItem(KEYS.EXAMS), INITIAL_EXAMS);
-    // Deduplicate strictly by mapel so there are always exactly 2 official subjects
+    // Deduplicate strictly by canonical mapel so there are always exactly 2 official subjects
     const mapelMap = new Map<string, Exam>();
     for (const e of stored) {
-      if (!mapelMap.has(e.mapel)) {
-        mapelMap.set(e.mapel, e);
+      const canonicalKey = e.mapel?.toLowerCase().includes('matematika')
+        ? 'Matematika'
+        : 'Bahasa Indonesia';
+      if (!mapelMap.has(canonicalKey)) {
+        mapelMap.set(canonicalKey, {
+          ...e,
+          exam_id: canonicalKey === 'Matematika' ? 'exam_01' : 'exam_02',
+          judul: `TKA ${canonicalKey} Kelas IX`,
+          mapel: canonicalKey as Subject,
+        });
       }
     }
     const deduplicated = Array.from(mapelMap.values());
-    if (deduplicated.length !== stored.length) {
-      localStorage.setItem(KEYS.EXAMS, JSON.stringify(deduplicated));
-    }
+    localStorage.setItem(KEYS.EXAMS, JSON.stringify(deduplicated));
     return deduplicated;
   },
 
