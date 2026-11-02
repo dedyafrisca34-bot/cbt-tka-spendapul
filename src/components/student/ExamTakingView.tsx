@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   BookOpen,
   CheckSquare,
-  Square,
   ShieldCheck,
   Check,
   Maximize2,
@@ -45,11 +44,6 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
   // User answers map: question_id -> OptionKey
   const [answers, setAnswers] = useState<Record<string, OptionKey | ''>>(
     initialAttempt.jawaban || {}
-  );
-
-  // User flagged map: question_id -> boolean
-  const [raguRagu, setRaguRagu] = useState<Record<string, boolean>>(
-    initialAttempt.ragu_ragu || {}
   );
 
   // Autosave status indicator
@@ -225,31 +219,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
       initialAttempt.attempt_id,
       currentQuestion.question_id,
       optionKey,
-      Boolean(raguRagu[currentQuestion.question_id])
-    );
-
-    setTimeout(() => {
-      setSaveStatus('saved');
-    }, 250);
-  };
-
-  // Toggle Ragu-ragu (flag for review)
-  const handleToggleRagu = () => {
-    if (!currentQuestion) return;
-    setSaveStatus('saving');
-
-    const currentFlag = Boolean(raguRagu[currentQuestion.question_id]);
-    const updatedFlags = {
-      ...raguRagu,
-      [currentQuestion.question_id]: !currentFlag,
-    };
-    setRaguRagu(updatedFlags);
-
-    StorageService.saveAnswer(
-      initialAttempt.attempt_id,
-      currentQuestion.question_id,
-      answers[currentQuestion.question_id] || '',
-      !currentFlag
+      false
     );
 
     setTimeout(() => {
@@ -280,11 +250,9 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
   // Answer stats for summary modal & badges
   const totalQuestions = questions.length;
   const answeredCount = Object.values(answers).filter((a) => a !== '').length;
-  const flaggedCount = Object.values(raguRagu).filter(Boolean).length;
   const unansweredCount = totalQuestions - answeredCount;
 
   const currentAnswer = currentQuestion ? answers[currentQuestion.question_id] : '';
-  const isCurrentRagu = currentQuestion ? Boolean(raguRagu[currentQuestion.question_id]) : false;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none">
@@ -403,19 +371,15 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
               const num = idx + 1;
               const isCurrent = idx === currentIndex;
               const hasAnswer = Boolean(answers[q.question_id]);
-              const isRagu = Boolean(raguRagu[q.question_id]);
 
-              // Determine color class based on exact CBT hierarchy:
+              // Determine color class:
               // 1. Current question -> Blue
-              // 2. Ragu-ragu -> Orange/Red
-              // 3. Answered -> Green
-              // 4. Default -> Gray/White
+              // 2. Answered -> Green
+              // 3. Default -> Slate/White
               let btnStyle = 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
 
               if (isCurrent) {
                 btnStyle = 'bg-sky-600 text-white font-bold border-sky-600 shadow-sm ring-2 ring-sky-300';
-              } else if (isRagu) {
-                btnStyle = 'bg-orange-600 text-white font-bold border-orange-600 shadow-xs';
               } else if (hasAnswer) {
                 btnStyle = 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-xs';
               }
@@ -427,7 +391,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
                   onClick={() => setCurrentIndex(idx)}
                   className={`h-9 rounded-lg border text-xs flex items-center justify-center transition-all cursor-pointer ${btnStyle}`}
                   title={`Nomor ${num}: ${
-                    isRagu ? 'Ragu-ragu' : hasAnswer ? 'Sudah dijawab' : 'Belum dijawab'
+                    hasAnswer ? 'Sudah dijawab' : 'Belum dijawab'
                   }`}
                 >
                   {num}
@@ -436,7 +400,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
             })}
           </div>
 
-          {/* Bottom Legend (Matching Mockup exactly) */}
+          {/* Bottom Legend */}
           <div className="mt-5 pt-4 border-t border-slate-100 space-y-2 text-xs">
             <div className="flex items-center gap-2.5">
               <span className="w-4 h-4 rounded bg-sky-600 shrink-0" />
@@ -449,10 +413,6 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
             <div className="flex items-center gap-2.5">
               <span className="w-4 h-4 rounded bg-slate-100 border border-slate-300 shrink-0" />
               <span className="text-slate-600 text-[11px]">Belum dijawab</span>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <span className="w-4 h-4 rounded bg-orange-600 shrink-0" />
-              <span className="text-slate-600 text-[11px]">Ragu-ragu</span>
             </div>
           </div>
         </aside>
@@ -566,36 +526,18 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
 
           </div>
 
-          {/* Bottom Action Bar: Prev, Ragu-ragu, Next (Mobile thumb friendly) */}
-          <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-100 flex items-center justify-between gap-2 sm:gap-3">
+          {/* Bottom Action Bar: Prev, Next (Mobile thumb friendly) */}
+          <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
             
             {/* Prev Button */}
             <button
               type="button"
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className="min-h-[44px] flex-1 sm:flex-none py-2.5 px-3 sm:px-4 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              className="min-h-[44px] flex-1 sm:flex-none py-2.5 px-4 sm:px-6 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
               <span>Sebelumnya</span>
-            </button>
-
-            {/* Ragu-ragu Checkbox Toggle */}
-            <button
-              type="button"
-              onClick={handleToggleRagu}
-              className={`min-h-[44px] flex-1 sm:flex-none py-2 px-3 sm:px-3.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition-colors cursor-pointer ${
-                isCurrentRagu
-                  ? 'bg-orange-50 border-orange-300 text-orange-700 font-bold'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100'
-              }`}
-            >
-              {isCurrentRagu ? (
-                <CheckSquare className="w-4 h-4 text-orange-600 shrink-0" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-400 shrink-0" />
-              )}
-              <span>Ragu-ragu</span>
             </button>
 
             {/* Next Button */}
@@ -603,7 +545,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
               type="button"
               onClick={handleNext}
               disabled={currentIndex === questions.length - 1}
-              className="min-h-[44px] flex-1 sm:flex-none py-2.5 px-3 sm:px-5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
+              className="min-h-[44px] flex-1 sm:flex-none py-2.5 px-4 sm:px-6 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
             >
               <span>Berikutnya</span>
               <ArrowRight className="w-3.5 h-3.5 shrink-0" />
@@ -698,9 +640,6 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
                 <h3 className="font-bold text-slate-900 text-base">Daftar Soal Ujian</h3>
                 <p className="text-xs text-slate-500">
                   Terjawab: <span className="font-bold text-emerald-600 font-mono">{answeredCount}</span> / {totalQuestions} soal
-                  {flaggedCount > 0 && (
-                    <span className="ml-2 text-orange-600 font-medium">({flaggedCount} ragu-ragu)</span>
-                  )}
                 </p>
               </div>
               <button
@@ -719,13 +658,10 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
                   const num = idx + 1;
                   const isCurrent = idx === currentIndex;
                   const hasAnswer = Boolean(answers[q.question_id]);
-                  const isRagu = Boolean(raguRagu[q.question_id]);
 
                   let btnStyle = 'bg-slate-100 text-slate-700 border-slate-200 active:bg-slate-200';
                   if (isCurrent) {
                     btnStyle = 'bg-sky-600 text-white font-bold border-sky-600 ring-2 ring-sky-300 shadow-sm';
-                  } else if (isRagu) {
-                    btnStyle = 'bg-orange-600 text-white font-bold border-orange-600 shadow-xs';
                   } else if (hasAnswer) {
                     btnStyle = 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-xs';
                   }
@@ -747,7 +683,7 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
               </div>
 
               {/* Legends */}
-              <div className="mt-5 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-5 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-3.5 h-3.5 rounded bg-sky-600 shrink-0" />
                   <span className="text-slate-600 text-[11px]">Soal Saat Ini</span>
@@ -755,10 +691,6 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="w-3.5 h-3.5 rounded bg-emerald-600 shrink-0" />
                   <span className="text-slate-600 text-[11px]">Sudah Dijawab</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3.5 h-3.5 rounded bg-orange-600 shrink-0" />
-                  <span className="text-slate-600 text-[11px]">Ragu-ragu</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-300 shrink-0" />
@@ -810,14 +742,10 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
             </p>
 
             {/* Summary Tallies */}
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="mt-4 grid grid-cols-2 gap-3 text-center text-xs">
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
                 <span className="block text-emerald-800 font-bold text-base">{answeredCount}</span>
                 <span className="text-emerald-700 text-[10px]">Terjawab</span>
-              </div>
-              <div className="p-3 bg-orange-50 rounded-xl border border-orange-100">
-                <span className="block text-orange-800 font-bold text-base">{flaggedCount}</span>
-                <span className="text-orange-700 text-[10px]">Ragu-ragu</span>
               </div>
               <div className="p-3 bg-slate-100 rounded-xl border border-slate-200">
                 <span className="block text-slate-800 font-bold text-base">{unansweredCount}</span>
@@ -826,12 +754,11 @@ export const ExamTakingView: React.FC<ExamTakingViewProps> = ({
             </div>
 
             {/* Warning if incomplete */}
-            {(unansweredCount > 0 || flaggedCount > 0) && (
+            {unansweredCount > 0 && (
               <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                 <span>
-                  Masih terdapat <strong>{unansweredCount} soal belum dijawab</strong> dan{' '}
-                  <strong>{flaggedCount} soal bertanda ragu-ragu</strong>. Anda disarankan untuk memeriksa kembali.
+                  Masih terdapat <strong>{unansweredCount} soal belum dijawab</strong>. Anda disarankan untuk memeriksa kembali sebelum mengumpulkan.
                 </span>
               </div>
             )}
