@@ -1,16 +1,95 @@
-import React, { useState } from 'react';
-import { Save, RotateCcw, ShieldCheck, CheckCircle2, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Save,
+  RotateCcw,
+  ShieldCheck,
+  CheckCircle2,
+  ShieldAlert,
+  Cloud,
+  RefreshCw,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { StorageService, AppSettings } from '../../services/storageService';
 
 export const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>(() => StorageService.getSettings());
   const [savedMsg, setSavedMsg] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  // Auto-listen when cloud settings are updated by any process or remote fetch
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<AppSettings>;
+      if (customEvent.detail) {
+        setSettings(customEvent.detail);
+      } else {
+        setSettings(StorageService.getSettings());
+      }
+    };
+    window.addEventListener('cbt_settings_updated', handleUpdate);
+    return () => window.removeEventListener('cbt_settings_updated', handleUpdate);
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSyncing(true);
+    setSyncStatus(null);
+    
+    // Save to local storage immediately
     StorageService.saveSettings(settings);
     setSavedMsg(true);
-    setTimeout(() => setSavedMsg(false), 2500);
+
+    try {
+      // Sync to Google Spreadsheet cloud backend so all PCs & devices immediately get updated
+      await StorageService.syncSettingsToSpreadsheet(settings);
+      setSyncStatus({
+        type: 'success',
+        message: 'Pengaturan Proktor, Kepala Sekolah, dan sistem telah berhasil disimpan & disinkronkan ke Google Spreadsheet. Semua komputer lain akan otomatis mengikuti!',
+      });
+    } catch (err) {
+      setSyncStatus({
+        type: 'info',
+        message: 'Pengaturan tersimpan di browser ini. Hubungkan internet untuk sinkronisasi penuh ke Google Spreadsheet.',
+      });
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => {
+        setSavedMsg(false);
+      }, 3500);
+    }
+  };
+
+  const handleFetchRemote = async () => {
+    setIsSyncing(true);
+    setSyncStatus(null);
+    try {
+      const res = await StorageService.fetchRemoteSettings();
+      if (res.success && res.settings) {
+        setSettings(res.settings);
+        setSyncStatus({
+          type: 'success',
+          message: `Berhasil menarik pengaturan terbaru dari Cloud Google Spreadsheet! (Proktor: ${res.settings.namaProktor || '-'}, Kepala Sekolah: ${res.settings.namaKepalaSekolah || '-'})`,
+        });
+      } else {
+        // Try fallback to fetching remote exams which also parses cbt_settings
+        await StorageService.fetchRemoteExams();
+        const fresh = StorageService.getSettings();
+        setSettings(fresh);
+        setSyncStatus({
+          type: 'success',
+          message: `Pengaturan terbaru telah disinkronkan dari Google Spreadsheet! (Proktor: ${fresh.namaProktor || '-'})`,
+        });
+      }
+    } catch (err) {
+      setSyncStatus({
+        type: 'error',
+        message: 'Gagal menghubungi Google Spreadsheet. Periksa koneksi internet Anda.',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleResetData = () => {
@@ -30,16 +109,66 @@ export const AdminSettings: React.FC = () => {
     <div className="space-y-6 max-w-3xl">
       
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-          Pengaturan Sistem CBT
-        </h1>
-        <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-          Konfigurasi identitas sekolah, kriteria kelulusan KKM, dan data master.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Pengaturan Sistem CBT
+          </h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+            Konfigurasi identitas sekolah, nama Proktor & Kepala Sekolah, serta sinkronisasi multi-PC.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleFetchRemote}
+          disabled={isSyncing}
+          className="self-start sm:self-auto px-3.5 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-semibold rounded-xl text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+          title="Tarik data nama Proktor dan Kepala Sekolah terbaru dari Google Spreadsheet"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-sky-600' : ''}`} />
+          <span>Tarik Pengaturan dari Cloud</span>
+        </button>
       </div>
 
-      {savedMsg && (
+      {/* Cloud Sync Status Info Banner */}
+      <div className="p-3.5 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl flex items-start gap-3">
+        <div className="p-2 bg-white rounded-xl shadow-xs text-sky-700 shrink-0">
+          <Cloud className="w-4 h-4" />
+        </div>
+        <div className="text-xs leading-relaxed">
+          <div className="font-bold text-sky-950 flex items-center gap-1.5">
+            <span>Sinkronisasi Multi-Perangkat (Multi-PC) Aktif</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </div>
+          <p className="text-sky-800 mt-0.5">
+            Ketika Anda mengganti Nama Proktor atau Kepala Sekolah di sini dan klik <strong className="font-semibold">&ldquo;Simpan & Sinkronkan&rdquo;</strong>, data otomatis tersimpan ke Google Spreadsheet cloud. Komputer lain atau HP siswa akan langsung memperoleh nama terbaru saat membuka aplikasi atau menekan tombol Tarik Pengaturan.
+          </p>
+        </div>
+      </div>
+
+      {syncStatus && (
+        <div
+          className={`p-3.5 rounded-xl text-xs flex items-start gap-2 border ${
+            syncStatus.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : syncStatus.type === 'error'
+              ? 'bg-rose-50 border-rose-200 text-rose-800'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          {syncStatus.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          ) : syncStatus.type === 'error' ? (
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          ) : (
+            <Cloud className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          )}
+          <span className="leading-relaxed">{syncStatus.message}</span>
+        </div>
+      )}
+
+      {savedMsg && !syncStatus && (
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           <span>Pengaturan berhasil disimpan ke sistem!</span>
@@ -338,13 +467,24 @@ export const AdminSettings: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleFetchRemote}
+              disabled={isSyncing}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-sky-600' : ''}`} />
+              <span>Tarik Pengaturan Terbaru (Sinkron Antar-PC)</span>
+            </button>
+
             <button
               type="submit"
-              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-sm shadow-sky-600/25 transition-all cursor-pointer"
+              disabled={isSyncing}
+              className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/25 transition-all cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
-              <span>Simpan Perubahan</span>
+              {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>{isSyncing ? 'Menyimpan & Menyinkronkan...' : 'Simpan & Sinkronkan ke Semua PC'}</span>
             </button>
           </div>
         </form>

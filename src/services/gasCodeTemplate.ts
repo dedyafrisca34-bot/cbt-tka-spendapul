@@ -207,6 +207,10 @@ function doGet(e) {
       return createJsonResponse({ success: true, message: 'CBT TKA SMPN 2 Pulung GAS API Aktif!', timestamp: new Date().toISOString() });
     }
 
+    if (action === 'getSettings') {
+      return getSettingsHandler();
+    }
+
     if (action === 'getExams') {
       return getExamsHandler();
     }
@@ -260,6 +264,10 @@ function doPost(e) {
       }
     }
     const action = data.action || '';
+
+    if (action === 'saveSettings') {
+      return saveSettingsHandler(data.settings);
+    }
 
     if (action === 'syncQuestions') {
       return syncQuestionsHandler(data);
@@ -727,6 +735,61 @@ function saveExamHandler(exam) {
   }
 
   return createJsonResponse({ success: true, message: 'Ujian berhasil diperbarui di Spreadsheet.' });
+}
+
+function getSettingsHandler() {
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName('Pengaturan');
+  if (!sheet) {
+    const ujianSheet = ss.getSheetByName(SHEETS.UJIAN);
+    if (ujianSheet) {
+      const rows = ujianSheet.getDataRange().getValues();
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][0] === 'cbt_settings') {
+          try {
+            return createJsonResponse({ success: true, settings: JSON.parse(rows[i][1]) });
+          } catch (_) {}
+        }
+      }
+    }
+    return createJsonResponse({ success: false, message: 'Data pengaturan belum tersimpan di Spreadsheet.' });
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const settings = {};
+  for (let i = 1; i < rows.length; i++) {
+    const key = String(rows[i][0]).trim();
+    const val = rows[i][1];
+    if (key) {
+      settings[key] = val;
+    }
+  }
+  return createJsonResponse({ success: true, settings: settings });
+}
+
+function saveSettingsHandler(settings) {
+  if (!settings || typeof settings !== 'object') {
+    return createJsonResponse({ success: false, message: 'Data pengaturan tidak valid.' });
+  }
+
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName('Pengaturan');
+  if (!sheet) {
+    sheet = ss.insertSheet('Pengaturan');
+    sheet.getRange(1, 1, 1, 2).setValues([['Kunci', 'Nilai']]);
+    sheet.getRange(1, 1, 1, 2).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+  }
+
+  const entries = Object.entries(settings);
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, 2).setValues([['Kunci', 'Nilai']]);
+  sheet.getRange(1, 1, 1, 2).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+  
+  if (entries.length > 0) {
+    sheet.getRange(2, 1, entries.length, 2).setValues(entries);
+  }
+
+  return createJsonResponse({ success: true, message: 'Pengaturan Proktor & Kepala Sekolah berhasil disimpan di Spreadsheet.' });
 }
 
 function saveAnswerHandler(data) {

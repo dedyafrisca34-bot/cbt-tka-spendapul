@@ -49,7 +49,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   kabupatenKota: 'Kabupaten Ponorogo',
   namaKepalaSekolah: 'Drs. SUPRIYANTO, M.Pd.',
   nipKepalaSekolah: '19680512 199412 1 002',
-  namaProktor: 'BUDI SANTOSO, S.Pd.',
+  namaProktor: 'Dedy Andika Afrisca, S.Kom',
   nipProktor: '19850101 201001 1 005',
   jabatanProktor: 'Guru Pengampu / Proktor CBT',
   tempatCetak: 'Pulung, Ponorogo',
@@ -215,6 +215,142 @@ export const StorageService = {
 
   saveSettings(settings: AppSettings) {
     localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cbt_settings_updated', { detail: settings }));
+    }
+    // Auto-sync settings to Google Spreadsheet so all other computers/devices receive it immediately
+    this.syncSettingsToSpreadsheet(settings).catch(() => {});
+  },
+
+  // Save settings to Google Spreadsheet
+  async syncSettingsToSpreadsheet(settings: AppSettings): Promise<{ success: boolean; message?: string }> {
+    try {
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return { success: false, message: 'Endpoint belum disetel.' };
+
+      const payload = {
+        namaSekolah: settings.namaSekolah,
+        motto: settings.motto,
+        alamatSekolah: settings.alamatSekolah,
+        kabupatenKota: settings.kabupatenKota,
+        namaKepalaSekolah: settings.namaKepalaSekolah,
+        nipKepalaSekolah: settings.nipKepalaSekolah,
+        namaProktor: settings.namaProktor,
+        nipProktor: settings.nipProktor,
+        jabatanProktor: settings.jabatanProktor,
+        tempatCetak: settings.tempatCetak,
+        tahunPelajaran: settings.tahunPelajaran,
+        kkm: settings.kkm,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Dual-sync: 1) saveExam with cbt_settings for instant backward compatibility with existing deployed GAS
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveExam',
+          exam: {
+            exam_id: 'cbt_settings',
+            judul: JSON.stringify(payload),
+            mapel: 'Pengaturan',
+            durasi_menit: 0,
+            mulai_at: payload.updated_at,
+            selesai_at: '',
+            jumlah_soal: 0,
+            status: 'Selesai',
+          },
+        }),
+        mode: 'no-cors',
+      });
+
+      // 2) Also send dedicated saveSettings action (for forward compatibility with new GAS script)
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: payload,
+        }),
+        mode: 'no-cors',
+      }).catch(() => {});
+
+      return { success: true, message: 'Pengaturan berhasil disinkronkan ke Google Spreadsheet & semua perangkat!' };
+    } catch (err: unknown) {
+      return { success: false, message: String(err) };
+    }
+  },
+
+  // Pull remote settings from Google Spreadsheet
+  async fetchRemoteSettings(): Promise<{ success: boolean; settings?: AppSettings; error?: string }> {
+    try {
+      const current = this.getSettings();
+      const endpoint = current.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return { success: false, error: 'Endpoint belum disetel.' };
+
+      // Try 1: Dedicated getSettings action
+      try {
+        const resp = await fetch(`${endpoint}?action=getSettings`);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.success && data.settings) {
+            const merged: AppSettings = {
+              ...current,
+              ...data.settings,
+              gasApiUrl: OFFICIAL_GAS_API_URL,
+              syncWithGas: true,
+            };
+            localStorage.setItem(KEYS.SETTINGS, JSON.stringify(merged));
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('cbt_settings_updated', { detail: merged }));
+            }
+            return { success: true, settings: merged };
+          }
+        }
+      } catch (_) {}
+
+      // Try 2: From cbt_settings row in getExams (works with already-deployed Google Apps Script!)
+      const respExams = await fetch(`${endpoint}?action=getExams`);
+      if (respExams.ok) {
+        const dataExams = await respExams.json();
+        if (dataExams && dataExams.success && Array.isArray(dataExams.exams)) {
+          const settingsRow = dataExams.exams.find((e: any) => e.exam_id === 'cbt_settings');
+          if (settingsRow && settingsRow.judul) {
+            try {
+              const parsed = JSON.parse(settingsRow.judul);
+              if (parsed && typeof parsed === 'object') {
+                const merged: AppSettings = {
+                  ...current,
+                  namaSekolah: parsed.namaSekolah || current.namaSekolah,
+                  motto: parsed.motto || current.motto,
+                  alamatSekolah: parsed.alamatSekolah || current.alamatSekolah,
+                  kabupatenKota: parsed.kabupatenKota || current.kabupatenKota,
+                  namaKepalaSekolah: parsed.namaKepalaSekolah || current.namaKepalaSekolah,
+                  nipKepalaSekolah: parsed.nipKepalaSekolah || current.nipKepalaSekolah,
+                  namaProktor: parsed.namaProktor || current.namaProktor,
+                  nipProktor: parsed.nipProktor || current.nipProktor,
+                  jabatanProktor: parsed.jabatanProktor || current.jabatanProktor,
+                  tempatCetak: parsed.tempatCetak || current.tempatCetak,
+                  tahunPelajaran: parsed.tahunPelajaran !== undefined ? parsed.tahunPelajaran : current.tahunPelajaran,
+                  kkm: Number(parsed.kkm || current.kkm || 75),
+                  gasApiUrl: OFFICIAL_GAS_API_URL,
+                  syncWithGas: true,
+                };
+                localStorage.setItem(KEYS.SETTINGS, JSON.stringify(merged));
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('cbt_settings_updated', { detail: merged }));
+                }
+                return { success: true, settings: merged };
+              }
+            } catch (_) {}
+          }
+        }
+      }
+
+      return { success: false, error: 'Data pengaturan di Spreadsheet belum tersedia.' };
+    } catch (err: unknown) {
+      return { success: false, error: String(err) };
+    }
   },
 
   // Students
@@ -420,7 +556,52 @@ export const StorageService = {
 
         // Remote exams take precedence for status, schedule, and duration
         for (const remote of data.exams) {
-          const mapel = remote.mapel || (remote.judul?.toLowerCase().includes('matematika') ? 'Matematika' : 'Bahasa Indonesia');
+          // Intercept serialized settings row if present in Ujian sheet
+          if (
+            remote.exam_id === 'cbt_settings' ||
+            remote.mapel === 'cbt_settings' ||
+            (typeof remote.judul === 'string' && remote.judul.startsWith('{'))
+          ) {
+            try {
+              const parsed = JSON.parse(remote.judul);
+              if (parsed && typeof parsed === 'object') {
+                const current = this.getSettings();
+                const merged: AppSettings = {
+                  ...current,
+                  namaSekolah: parsed.namaSekolah || current.namaSekolah,
+                  motto: parsed.motto || current.motto,
+                  alamatSekolah: parsed.alamatSekolah || current.alamatSekolah,
+                  kabupatenKota: parsed.kabupatenKota || current.kabupatenKota,
+                  namaKepalaSekolah: parsed.namaKepalaSekolah || current.namaKepalaSekolah,
+                  nipKepalaSekolah: parsed.nipKepalaSekolah || current.nipKepalaSekolah,
+                  namaProktor: parsed.namaProktor || current.namaProktor,
+                  nipProktor: parsed.nipProktor || current.nipProktor,
+                  jabatanProktor: parsed.jabatanProktor || current.jabatanProktor,
+                  tempatCetak: parsed.tempatCetak || current.tempatCetak,
+                  tahunPelajaran: parsed.tahunPelajaran !== undefined ? parsed.tahunPelajaran : current.tahunPelajaran,
+                  kkm: Number(parsed.kkm || current.kkm || 75),
+                  gasApiUrl: OFFICIAL_GAS_API_URL,
+                  syncWithGas: true,
+                };
+                localStorage.setItem(KEYS.SETTINGS, JSON.stringify(merged));
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('cbt_settings_updated', { detail: merged }));
+                }
+              }
+            } catch (_) {}
+            continue; // CRITICAL: NEVER treat cbt_settings as an exam card!
+          }
+
+          const rawMapel = (remote.mapel || '').trim();
+          const isMath = rawMapel.toLowerCase().includes('matematika') || (remote.judul && remote.judul.toLowerCase().includes('matematika'));
+          const isIndo = rawMapel.toLowerCase().includes('indonesia') || (remote.judul && remote.judul.toLowerCase().includes('indonesia'));
+
+          if (!isMath && !isIndo) {
+            // Ignore non-TKA exams or malformed rows so count is strictly 2
+            continue;
+          }
+
+          const mapel = isMath ? 'Matematika' : 'Bahasa Indonesia';
           if (seenMapel.has(mapel)) continue;
           seenMapel.add(mapel);
 

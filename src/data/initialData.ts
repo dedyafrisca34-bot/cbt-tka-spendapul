@@ -6,8 +6,8 @@ export const INITIAL_STUDENTS: Student[] = REAL_SMPN2_STUDENTS;
 export const INITIAL_ADMIN: AdminUser = {
   admin_id: 'adm_01',
   username: 'admin',
-  nama: 'Budi Santoso',
-  role: 'Guru',
+  nama: 'Dedy Andika Afrisca, S.Kom',
+  role: 'Proktor',
 };
 
 // Generate 40 authentic questions for Matematika

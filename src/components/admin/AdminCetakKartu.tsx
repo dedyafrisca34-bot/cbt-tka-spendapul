@@ -27,7 +27,20 @@ export type TtdType = 'ringkas' | 'kepala' | 'proktor' | 'keduanya' | 'none';
 
 export const AdminCetakKartu: React.FC<AdminCetakKartuProps> = ({ onBackToDataSiswa }) => {
   const [students] = useState<Student[]>(() => StorageService.getStudents());
-  const [settings] = useState<AppSettings>(() => StorageService.getSettings());
+  const [settings, setSettings] = useState<AppSettings>(() => StorageService.getSettings());
+
+  // Listen to remote settings updates so proctor/headmaster name updates immediately
+  useEffect(() => {
+    const handleUpdate = () => {
+      const fresh = StorageService.getSettings();
+      setSettings(fresh);
+      if (fresh.tempatCetak) {
+        setTempatTanggal(fresh.tempatCetak);
+      }
+    };
+    window.addEventListener('cbt_settings_updated', handleUpdate);
+    return () => window.removeEventListener('cbt_settings_updated', handleUpdate);
+  }, []);
 
   // Filter States: Default to Kelas 9A so it's not overwhelming 145 cards at once, but easy to switch
   const [filterKelas, setFilterKelas] = useState<string>('9A');
