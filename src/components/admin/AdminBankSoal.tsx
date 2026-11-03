@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Eye, Edit2, Trash2, X, Check, BookOpen, AlertCircle, UploadCloud, RefreshCw, CheckCircle, Database } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, X, Check, BookOpen, AlertCircle, UploadCloud, RefreshCw, CheckCircle, Database, FileText } from 'lucide-react';
 import { Question, Subject, CognitiveLevel, OptionKey } from '../../types/cbt';
 import { StorageService } from '../../services/storageService';
 
@@ -105,7 +105,9 @@ export const AdminBankSoal: React.FC = () => {
         await StorageService.uploadAllQuestionsToSpreadsheet(remaining);
         setSyncFeedback({
           type: 'success',
-          message: 'Soal berhasil dihapus! Data di aplikasi dan Google Spreadsheet sudah sama persis.',
+          message: remaining.length === 0
+            ? 'Soal terakhir berhasil dihapus! Sheet Soal di Google Spreadsheet kini telah dikosongkan (0 butir soal).'
+            : 'Soal berhasil dihapus! Data di aplikasi dan Google Spreadsheet sudah sama persis.',
         });
       } catch (_) {
         setSyncFeedback({
@@ -150,30 +152,82 @@ export const AdminBankSoal: React.FC = () => {
     setTimeout(() => setSyncFeedback(null), 4000);
   };
 
-  // Upload all questions to Google Spreadsheet
+  // Upload all questions / Purge 0 questions to Google Spreadsheet
   const handleUploadAllToSpreadsheet = async () => {
     setIsUploading(true);
     setSyncFeedback(null);
     try {
       const res = await StorageService.uploadAllQuestionsToSpreadsheet(questions);
       if (res.success) {
-        setSyncFeedback({
-          type: 'success',
-          message: `Berhasil! Seluruh ${questions.length} butir soal telah dikirim ke tab Sheet Soal Google Spreadsheet. Sekarang data di Spreadsheet dan Aplikasi sudah sama persis!`,
-        });
+        if (questions.length === 0) {
+          setSyncFeedback({
+            type: 'success',
+            message: 'Berhasil! Seluruh soal di Google Spreadsheet telah dikosongkan (0 butir soal). Baris 2 ke bawah pada Sheet Soal sudah dibersihkan secara tuntas.',
+          });
+        } else {
+          setSyncFeedback({
+            type: 'success',
+            message: `Berhasil! Seluruh ${questions.length} butir soal telah dikirim ke tab Sheet Soal Google Spreadsheet. Sekarang data di Spreadsheet dan Aplikasi sudah sama persis!`,
+          });
+        }
       } else {
         setSyncFeedback({
           type: 'error',
-          message: res.message || 'Gagal mengirim soal ke Spreadsheet.',
+          message: res.message || 'Gagal menyinkronkan soal ke Spreadsheet.',
         });
       }
     } catch (err: unknown) {
       setSyncFeedback({
         type: 'error',
-        message: 'Terjadi kesalahan saat mengunggah soal: ' + String(err),
+        message: 'Terjadi kesalahan saat menyinkronkan soal: ' + String(err),
       });
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // Delete all questions at once from both app & Spreadsheet
+  const handleDeleteAllQuestions = async () => {
+    if (confirm('PERINGATAN: Apakah Anda yakin ingin MENGOSONGKAN seluruh soal di aplikasi dan menghapus seluruh baris soal di Google Spreadsheet? Tindakan ini akan mengosongkan Sheet Soal menjadi 0 butir soal.')) {
+      setIsUploading(true);
+      setSyncFeedback({
+        type: 'success',
+        message: 'Sedang membersihkan seluruh soal dari aplikasi dan Google Spreadsheet...',
+      });
+      try {
+        const res = await StorageService.deleteAllQuestions();
+        setQuestions([]);
+        setSyncFeedback({
+          type: 'success',
+          message: res.message || 'Seluruh soal berhasil dihapus dan Sheet Soal di Google Spreadsheet telah dikosongkan (0 butir soal).',
+        });
+      } catch (err: unknown) {
+        setSyncFeedback({
+          type: 'error',
+          message: 'Gagal mengosongkan soal: ' + String(err),
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  // Restore 80 standard questions
+  const handleRestoreDefaultQuestions = async () => {
+    if (confirm('Apakah Anda ingin memuat ulang 80 butir soal standar (TKA Matematika & Bahasa Indonesia)?')) {
+      const restored = StorageService.restoreDefaultQuestions();
+      setQuestions(restored);
+      setSyncFeedback({
+        type: 'success',
+        message: '80 butir soal standar berhasil dimuat ulang ke aplikasi. Mengunggah ke Spreadsheet...',
+      });
+      try {
+        await StorageService.uploadAllQuestionsToSpreadsheet(restored);
+        setSyncFeedback({
+          type: 'success',
+          message: '80 butir soal standar berhasil dimuat dan disinkronkan ke Google Spreadsheet!',
+        });
+      } catch (_) {}
     }
   };
 
@@ -215,22 +269,56 @@ export const AdminBankSoal: React.FC = () => {
             Bank Soal
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-            Kelola {questions.length} butir soal TKA Matematika dan Bahasa Indonesia terhubung Cloud Spreadsheet.
+            {questions.length === 0
+              ? 'Bank Soal saat ini kosong (0 butir soal). Terhubung dengan Cloud Spreadsheet.'
+              : `Kelola ${questions.length} butir soal TKA Matematika dan Bahasa Indonesia terhubung Cloud Spreadsheet.`}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Upload All 80 Questions Button */}
+          {/* Upload / Kosongkan Button */}
           <button
             type="button"
             onClick={handleUploadAllToSpreadsheet}
             disabled={isUploading}
-            className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/25 transition-all cursor-pointer disabled:opacity-60"
-            title="Kirim seluruh butir soal saat ini ke Sheet Soal di Spreadsheet agar data sama persis"
+            className={`px-3.5 py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${
+              questions.length === 0
+                ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/25 ring-2 ring-rose-300'
+                : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-emerald-600/25'
+            }`}
+            title={
+              questions.length === 0
+                ? 'Kosongkan sheet Soal di Spreadsheet agar menjadi 0 butir soal'
+                : 'Kirim seluruh butir soal saat ini ke Sheet Soal di Spreadsheet agar data sama persis'
+            }
           >
-            <UploadCloud className={`w-4 h-4 ${isUploading ? 'animate-bounce' : ''}`} />
-            <span>{isUploading ? 'Mengunggah ke Sheet...' : `Unggah ${questions.length} Soal ke Spreadsheet`}</span>
+            {questions.length === 0 ? (
+              <Trash2 className={`w-4 h-4 ${isUploading ? 'animate-bounce' : ''}`} />
+            ) : (
+              <UploadCloud className={`w-4 h-4 ${isUploading ? 'animate-bounce' : ''}`} />
+            )}
+            <span>
+              {isUploading
+                ? questions.length === 0 ? 'Mengosongkan Sheet...' : 'Mengunggah ke Sheet...'
+                : questions.length === 0
+                ? 'Kosongkan Soal di Spreadsheet (0 Soal)'
+                : `Unggah ${questions.length} Soal ke Spreadsheet`}
+            </span>
           </button>
+
+          {/* Quick Clear All Button if questions exist */}
+          {questions.length > 0 && (
+            <button
+              type="button"
+              onClick={handleDeleteAllQuestions}
+              disabled={isUploading}
+              className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+              title="Hapus semua soal dari aplikasi dan kosongkan Sheet di Spreadsheet"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Kosongkan Semua</span>
+            </button>
+          )}
 
           {/* Pull from Spreadsheet Button */}
           <button
@@ -423,8 +511,49 @@ export const AdminBankSoal: React.FC = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
-                    Tidak ada butir soal yang sesuai dengan kriteria pencarian.
+                  <td colSpan={6} className="py-12 px-4 text-center">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div className="font-semibold text-slate-800 text-sm">
+                        {questions.length === 0 ? 'Bank Soal Saat Ini Kosong (0 Butir Soal)' : 'Tidak ada butir soal yang sesuai dengan kriteria pencarian.'}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {questions.length === 0
+                          ? 'Seluruh soal di aplikasi telah dihapus. Anda dapat mengosongkan Sheet Soal di Google Spreadsheet agar benar-benar bersih, memuat ulang 80 soal standar, atau menambah butir soal baru.'
+                          : 'Coba ubah filter mata pelajaran atau kata kunci pencarian Anda.'}
+                      </p>
+                      {questions.length === 0 && (
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={handleUploadAllToSpreadsheet}
+                            disabled={isUploading}
+                            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{isUploading ? 'Sedang Mengosongkan...' : 'Kosongkan Sheet Soal di Spreadsheet Sekarang'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRestoreDefaultQuestions}
+                            className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>Muat Ulang 80 Soal Standar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleOpenCreate}
+                            className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Tambah Soal Baru</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )}

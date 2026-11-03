@@ -219,6 +219,10 @@ function doGet(e) {
       return getQuestionsHandler();
     }
 
+    if (action === 'clearQuestions') {
+      return clearQuestionsHandler();
+    }
+
     if (action === 'deleteQuestion') {
       return deleteQuestionHandler(params.question_id, params.teks_soal);
     }
@@ -271,6 +275,10 @@ function doPost(e) {
 
     if (action === 'syncQuestions') {
       return syncQuestionsHandler(data);
+    }
+
+    if (action === 'clearQuestions') {
+      return clearQuestionsHandler();
     }
 
     if (action === 'saveQuestion') {
@@ -547,8 +555,8 @@ function getQuestionsHandler() {
 
 function syncQuestionsHandler(data) {
   const incoming = data.questions || [];
-  if (!Array.isArray(incoming) || incoming.length === 0) {
-    return createJsonResponse({ success: false, message: 'Data soal kosong.' });
+  if (!Array.isArray(incoming)) {
+    return createJsonResponse({ success: false, message: 'Data soal tidak valid.' });
   }
 
   const ss = getDbSpreadsheet();
@@ -557,7 +565,7 @@ function syncQuestionsHandler(data) {
     sheet = ss.insertSheet(SHEETS.SOAL);
   }
 
-  // Bersihkan data lama kecuali header
+  // Bersihkan data lama baris 2 ke bawah, menyisakan header
   const lastRow = sheet.getLastRow();
   if (lastRow > 1) {
     sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
@@ -566,6 +574,14 @@ function syncQuestionsHandler(data) {
   const headers = ['question_id', 'mapel', 'topik', 'teks_soal', 'gambar_url', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'kunci', 'pembahasan', 'aktif'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+
+  if (incoming.length === 0) {
+    return createJsonResponse({
+      success: true,
+      message: 'Seluruh butir soal di Google Spreadsheet berhasil dikosongkan (0 butir soal). Sheet Soal bersih.',
+      total: 0
+    });
+  }
 
   const rowsToInsert = incoming.map(function(q) {
     return [
@@ -592,6 +608,29 @@ function syncQuestionsHandler(data) {
     success: true,
     message: 'Berhasil mengunggah ' + rowsToInsert.length + ' butir soal ke Spreadsheet!',
     total: rowsToInsert.length
+  });
+}
+
+function clearQuestionsHandler() {
+  const ss = getDbSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.SOAL);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.SOAL);
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+  }
+
+  const headers = ['question_id', 'mapel', 'topik', 'teks_soal', 'gambar_url', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'kunci', 'pembahasan', 'aktif'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+
+  return createJsonResponse({
+    success: true,
+    message: 'Seluruh butir soal di Google Spreadsheet berhasil dikosongkan (0 butir soal).',
+    total: 0
   });
 }
 
@@ -664,8 +703,8 @@ function deleteQuestionHandler(questionId, teksSoal) {
 
 function syncExamsHandler(data) {
   const incoming = data.exams || [];
-  if (!Array.isArray(incoming) || incoming.length === 0) {
-    return createJsonResponse({ success: false, message: 'Data ujian kosong.' });
+  if (!Array.isArray(incoming)) {
+    return createJsonResponse({ success: false, message: 'Data ujian tidak valid.' });
   }
 
   const ss = getDbSpreadsheet();
@@ -682,6 +721,10 @@ function syncExamsHandler(data) {
   const headers = ['exam_id', 'judul', 'mapel', 'durasi_menit', 'mulai_at', 'selesai_at', 'jumlah_soal', 'acak_soal', 'acak_opsi', 'tampilkan_nilai', 'status'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length).setBackground("#0369a1").setFontColor("#ffffff").setFontWeight("bold");
+
+  if (incoming.length === 0) {
+    return createJsonResponse({ success: true, message: 'Seluruh daftar ujian di Spreadsheet berhasil dikosongkan (0 ujian).', total: 0 });
+  }
 
   const rowsToInsert = incoming.map(function(e) {
     return [

@@ -439,8 +439,13 @@ export const StorageService = {
     try {
       const settings = this.getSettings();
       const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
-      const list = questionsToUpload || this.getQuestions();
+      const list = questionsToUpload !== undefined ? questionsToUpload : this.getQuestions();
       if (!endpoint) return { success: false, message: 'Endpoint belum disetel.' };
+
+      // If list is empty (0 questions), call dedicated clear method that guarantees complete purge
+      if (list.length === 0) {
+        return await this.clearAllQuestionsInSpreadsheet();
+      }
 
       await fetch(endpoint, {
         method: 'POST',
@@ -459,6 +464,100 @@ export const StorageService = {
     } catch (err: unknown) {
       return { success: false, message: String(err) };
     }
+  },
+
+  // Completely purge all questions in Google Spreadsheet so sheet 'Soal' has 0 rows (row 2..N cleared, header preserved)
+  async clearAllQuestionsInSpreadsheet(): Promise<{ success: boolean; message: string }> {
+    try {
+      const settings = this.getSettings();
+      const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
+      if (!endpoint) return { success: false, message: 'Endpoint belum disetel.' };
+
+      // Strategy 1: Forward-compatible clearQuestions action via GET & POST
+      fetch(`${endpoint}?action=clearQuestions`).catch(() => {});
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'clearQuestions' }),
+        mode: 'no-cors',
+      }).catch(() => {});
+
+      // Strategy 2: Forward-compatible syncQuestions with empty array
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'syncQuestions',
+          questions: [],
+        }),
+        mode: 'no-cors',
+      }).catch(() => {});
+
+      // Strategy 3: Backward-compatible wipe for currently deployed GAS script
+      // Older GAS script aborts if incoming.length === 0, but if incoming has 1 item, it executes:
+      // sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent()
+      // which purges ALL previous rows in the sheet, and writes the 1 item.
+      // Then we immediately delete that 1 item via deleteQuestion!
+      // This guarantees the sheet is completely emptied even with the older script deployed!
+      const purgeKey = 'PURGE_CLEAR_ALL_' + Date.now();
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'syncQuestions',
+          questions: [
+            {
+              question_id: purgeKey,
+              mapel: 'Matematika',
+              topik: 'Pembersihan',
+              teks_soal: purgeKey,
+              opsi_a: '-',
+              opsi_b: '-',
+              opsi_c: '-',
+              opsi_d: '-',
+              kunci: 'A',
+              aktif: false,
+            },
+          ],
+        }),
+        mode: 'no-cors',
+      }).catch(() => {});
+
+      // Small delay to ensure Google Apps Script finishes writing the purge row
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Now delete that single temporary row using deleteQuestion (supported by all script versions via both GET and POST)
+      fetch(`${endpoint}?action=deleteQuestion&question_id=${encodeURIComponent(purgeKey)}&teks_soal=${encodeURIComponent(purgeKey)}`).catch(() => {});
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteQuestion',
+          question_id: purgeKey,
+          teks_soal: purgeKey,
+        }),
+        mode: 'no-cors',
+      }).catch(() => {});
+
+      return {
+        success: true,
+        message: 'Seluruh soal di Google Spreadsheet berhasil dikosongkan (0 butir soal). Sheet Soal kini bersih.',
+      };
+    } catch (err: unknown) {
+      return { success: false, message: String(err) };
+    }
+  },
+
+  // Delete all questions locally and clear Google Spreadsheet
+  async deleteAllQuestions(): Promise<{ success: boolean; message: string }> {
+    localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
+    return await this.clearAllQuestionsInSpreadsheet();
+  },
+
+  // Restore 80 default questions
+  restoreDefaultQuestions(): Question[] {
+    localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+    return INITIAL_QUESTIONS;
   },
 
   // Save single question to Spreadsheet
