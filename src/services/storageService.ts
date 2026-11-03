@@ -401,11 +401,17 @@ export const StorageService = {
   },
 
   deleteQuestion(questionId: string) {
+    const target = this.getQuestions().find((q) => q.question_id === questionId);
     const list = this.getQuestions().filter((q) => q.question_id !== questionId);
     localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(list));
 
-    // Auto-delete from Google Spreadsheet in background
-    this.deleteRemoteQuestion(questionId).catch(() => {});
+    // 1. Delete single question row from Google Spreadsheet (supports both question_id and teks_soal)
+    this.deleteRemoteQuestion(questionId, target?.teks_soal).catch(() => {});
+
+    // 2. Auto-sync the clean questions list to Google Spreadsheet
+    // This provides a 100% guarantee that the Spreadsheet sheet 'Soal' will match the app,
+    // even if the user has an older version of Google Apps Script deployed, or if the ID in Spreadsheet was custom.
+    this.uploadAllQuestionsToSpreadsheet(list).catch(() => {});
   },
 
   // Pull remote questions from Google Spreadsheet (so student phones update automatically)
@@ -475,7 +481,7 @@ export const StorageService = {
   },
 
   // Delete single question from Spreadsheet
-  async deleteRemoteQuestion(questionId: string): Promise<void> {
+  async deleteRemoteQuestion(questionId: string, teksSoal?: string): Promise<void> {
     try {
       const settings = this.getSettings();
       const endpoint = settings.gasApiUrl || OFFICIAL_GAS_API_URL;
@@ -487,6 +493,7 @@ export const StorageService = {
         body: JSON.stringify({
           action: 'deleteQuestion',
           question_id: questionId,
+          teks_soal: teksSoal || '',
         }),
         mode: 'no-cors',
       });

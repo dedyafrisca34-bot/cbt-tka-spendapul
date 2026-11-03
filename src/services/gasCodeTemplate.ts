@@ -220,7 +220,7 @@ function doGet(e) {
     }
 
     if (action === 'deleteQuestion') {
-      return deleteQuestionHandler(params.question_id);
+      return deleteQuestionHandler(params.question_id, params.teks_soal);
     }
 
     if (action === 'getExamQuestionsForStudent') {
@@ -278,7 +278,7 @@ function doPost(e) {
     }
 
     if (action === 'deleteQuestion') {
-      return deleteQuestionHandler(data.question_id);
+      return deleteQuestionHandler(data.question_id, data.teks_soal);
     }
 
     if (action === 'syncExams') {
@@ -637,15 +637,24 @@ function saveQuestionHandler(q) {
   return createJsonResponse({ success: true, message: 'Soal berhasil disimpan ke Spreadsheet.' });
 }
 
-function deleteQuestionHandler(questionId) {
-  if (!questionId) return createJsonResponse({ success: false, message: 'ID soal wajib diisi.' });
+function deleteQuestionHandler(questionId, teksSoal) {
+  if (!questionId && !teksSoal) return createJsonResponse({ success: false, message: 'ID atau teks soal wajib diisi.' });
   const ss = getDbSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.SOAL);
   if (!sheet) return createJsonResponse({ success: false, message: 'Sheet Soal tidak ditemukan.' });
 
   const rows = sheet.getDataRange().getValues();
+  const targetId = String(questionId || '').trim().toLowerCase();
+  const targetTeks = String(teksSoal || '').trim().toLowerCase();
+
   for (let i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]).trim() === String(questionId).trim()) {
+    const rowId = String(rows[i][0] || '').trim().toLowerCase();
+    const rowTeks = String(rows[i][3] || '').trim().toLowerCase();
+
+    const isMatchId = targetId && (rowId === targetId);
+    const isMatchTeks = targetTeks && (rowTeks === targetTeks || (targetTeks.length > 25 && rowTeks.includes(targetTeks)));
+
+    if (isMatchId || isMatchTeks) {
       sheet.deleteRow(i + 1);
       return createJsonResponse({ success: true, message: 'Soal berhasil dihapus dari Spreadsheet.' });
     }

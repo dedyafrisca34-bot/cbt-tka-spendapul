@@ -91,15 +91,29 @@ export const AdminBankSoal: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus butir soal ini? Perubahan akan otomatis terhapus dari Spreadsheet & HP siswa.')) {
+  const handleDelete = async (id: string) => {
+    if (confirm('Apakah Anda yakin ingin menghapus butir soal ini? Perubahan akan otomatis disinkronkan ke Spreadsheet & HP siswa.')) {
+      const remaining = questions.filter((q) => q.question_id !== id);
       StorageService.deleteQuestion(id);
-      setQuestions(StorageService.getQuestions());
+      setQuestions(remaining);
       setSyncFeedback({
         type: 'success',
-        message: 'Soal berhasil dihapus dan disinkronkan ke Spreadsheet!',
+        message: 'Sedang menghapus soal dan menyelaraskan ke Google Spreadsheet...',
       });
-      setTimeout(() => setSyncFeedback(null), 4000);
+
+      try {
+        await StorageService.uploadAllQuestionsToSpreadsheet(remaining);
+        setSyncFeedback({
+          type: 'success',
+          message: 'Soal berhasil dihapus! Data di aplikasi dan Google Spreadsheet sudah sama persis.',
+        });
+      } catch (_) {
+        setSyncFeedback({
+          type: 'success',
+          message: 'Soal berhasil dihapus dari aplikasi.',
+        });
+      }
+      setTimeout(() => setSyncFeedback(null), 5000);
     }
   };
 
