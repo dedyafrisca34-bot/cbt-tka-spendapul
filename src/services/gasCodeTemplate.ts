@@ -526,8 +526,33 @@ function getQuestionsHandler() {
     return createJsonResponse({ success: true, total: 0, questions: [] });
   }
 
-  const rows = sheet.getDataRange().getValues();
+  const rows = sheet.getDataRange().getDisplayValues();
   const questions = [];
+  function cleanCell(val) {
+    if (!val) return '';
+    let s = String(val).trim();
+    if (s.indexOf('GMT') !== -1 || /^[A-Za-z]{3}\s[A-Za-z]{3}\s\d{2}\s\d{4}/.test(s)) {
+      try {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          const day = d.getDate();
+          const month = d.getMonth() + 1;
+          if (month === 11 && day === 4) return '2 3/4';
+          if (month === 7 && day === 4) return '1 3/4';
+          if (month === 8 && day === 5) return '1 3/5';
+          if (month === 1 && day === 5) return '1/2';
+          if (month === 3 && day === 10) return '3/10';
+          if (month === 1 && day === 2) return '1/2';
+          if (month === 4 && day === 5) return '4/5';
+          return month + '/' + day;
+        }
+      } catch (e) {}
+    }
+    if (s === '9.3') return '09.30';
+    if (s === '10.3') return '10.30';
+    return s;
+  }
+
   // Baris 1: question_id | mapel | topik | teks_soal | gambar_url | opsi_a | opsi_b | opsi_c | opsi_d | kunci | pembahasan | aktif
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
@@ -540,10 +565,10 @@ function getQuestionsHandler() {
       level: 'C2',
       teks_soal: String(row[3] || ''),
       gambar_url: String(row[4] || ''),
-      opsi_a: String(row[5] || ''),
-      opsi_b: String(row[6] || ''),
-      opsi_c: String(row[7] || ''),
-      opsi_d: String(row[8] || ''),
+      opsi_a: cleanCell(row[5]),
+      opsi_b: cleanCell(row[6]),
+      opsi_c: cleanCell(row[7]),
+      opsi_d: cleanCell(row[8]),
       kunci: String(row[9] || 'A').trim().toUpperCase(),
       pembahasan: String(row[10] || ''),
       aktif: row[11] !== false && String(row[11]).toUpperCase() !== 'FALSE'

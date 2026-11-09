@@ -113,6 +113,38 @@ function safeParse<T>(val: string | null, fallback: T): T {
   }
 }
 
+// Helper to sanitize options converted into Dates or formatted decimals by Google Sheets
+export function cleanQuestionOption(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  let s = String(val).trim();
+  if (!s) return '';
+
+  // Google Sheets converts fractions (like 11/4, 7/4, 1/2) into full Date strings:
+  // e.g. "Wed Nov 04 2026 00:00:00 GMT+0700 (印尼西部時間)" or "Mon Jan 05 2026..."
+  if (s.includes('GMT') || /^[A-Za-z]{3}\s[A-Za-z]{3}\s\d{2}\s\d{4}/.test(s)) {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const day = d.getDate();
+      const month = d.getMonth() + 1;
+      // Recover math fractions:
+      if (month === 11 && day === 4) return '2 3/4'; // 11/4 = 2 3/4
+      if (month === 7 && day === 4) return '1 3/4'; // 7/4 = 1 3/4
+      if (month === 8 && day === 5) return '1 3/5'; // 8/5 = 1 3/5
+      if (month === 1 && day === 5) return '1/2'; // 5/10 = 1/2
+      if (month === 3 && day === 10) return '3/10';
+      if (month === 1 && day === 2) return '1/2';
+      if (month === 4 && day === 5) return '4/5';
+      return `${month}/${day}`;
+    }
+  }
+
+  // Google Sheets converts time like 09.30 or 10.30 into decimals
+  if (s === '9.3') return '09.30';
+  if (s === '10.3') return '10.30';
+
+  return s;
+}
+
 export const StorageService = {
   // Initialize storage if empty
   init() {
@@ -431,6 +463,7 @@ export const StorageService = {
     this.uploadAllQuestionsToSpreadsheet(list).catch(() => {});
   },
 
+
   // Pull remote questions from Google Spreadsheet (so all PCs, laptops, and student phones update automatically)
   async fetchRemoteQuestions(): Promise<{ success: boolean; count: number; error?: string }> {
     try {
@@ -443,12 +476,22 @@ export const StorageService = {
       const data = await resp.json();
       if (data && data.success && Array.isArray(data.questions)) {
         // Filter out any leftover mock questions or purge keys that may have been in older tests
-        const realQuestions = data.questions.filter(
-          (q: Question) =>
-            !q.question_id?.startsWith('q_math_') &&
-            !q.question_id?.startsWith('q_indo_') &&
-            !q.question_id?.startsWith('PURGE_CLEAR_ALL_')
-        );
+        // and sanitize options that Google Sheets converted into dates
+        const realQuestions = data.questions
+          .filter(
+            (q: Question) =>
+              !q.question_id?.startsWith('q_math_') &&
+              !q.question_id?.startsWith('q_indo_') &&
+              !q.question_id?.startsWith('PURGE_CLEAR_ALL_')
+          )
+          .map((q: Question) => ({
+            ...q,
+            opsi_a: cleanQuestionOption(q.opsi_a),
+            opsi_b: cleanQuestionOption(q.opsi_b),
+            opsi_c: cleanQuestionOption(q.opsi_c),
+            opsi_d: cleanQuestionOption(q.opsi_d),
+          }));
+
         localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(realQuestions));
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('cbt_questions_updated', { detail: realQuestions }));
