@@ -26,11 +26,12 @@ type StudentScreen =
   | { screen: 'result'; exam: Exam; attempt: ExamAttempt };
 
 export default function App() {
-  // Initialize local persistent storage and auto-sync latest cloud settings
+  // Initialize local persistent storage and auto-sync latest cloud settings, exams, and questions
   useEffect(() => {
     StorageService.init();
     StorageService.fetchRemoteSettings().catch(() => {});
     StorageService.fetchRemoteExams().catch(() => {});
+    StorageService.fetchRemoteQuestions().catch(() => {});
   }, []);
 
   // Authentication State
@@ -63,8 +64,12 @@ export default function App() {
   // Student: Start or resume exam
   const handleStartExam = (examId: string) => {
     if (auth.type !== 'student') return;
-    const { attempt, exam } = StorageService.startOrResumeExam(auth.student.student_id, examId);
-    setStudentScreen({ screen: 'taking', exam, attempt });
+    try {
+      const { attempt, exam } = StorageService.startOrResumeExam(auth.student.student_id, examId);
+      setStudentScreen({ screen: 'taking', exam, attempt });
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : String(err));
+    }
   };
 
   // Student: Finished exam

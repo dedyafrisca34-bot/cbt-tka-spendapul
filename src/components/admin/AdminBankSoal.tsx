@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Search, Eye, Edit2, Trash2, X, Check, BookOpen, AlertCircle, UploadCloud, RefreshCw, CheckCircle, Database, FileText } from 'lucide-react';
 import { Question, Subject, CognitiveLevel, OptionKey } from '../../types/cbt';
 import { StorageService } from '../../services/storageService';
@@ -10,6 +10,26 @@ export const AdminBankSoal: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Auto-pull real questions from Spreadsheet on mount & listen to updates
+  useEffect(() => {
+    StorageService.fetchRemoteQuestions().then((res) => {
+      if (res.success) {
+        setQuestions(StorageService.getQuestions());
+      }
+    }).catch(() => {});
+
+    const handleQuestionsUpdated = (e: any) => {
+      if (Array.isArray(e.detail)) {
+        setQuestions(e.detail);
+      } else {
+        setQuestions(StorageService.getQuestions());
+      }
+    };
+
+    window.addEventListener('cbt_questions_updated', handleQuestionsUpdated);
+    return () => window.removeEventListener('cbt_questions_updated', handleQuestionsUpdated);
+  }, []);
 
   // Filters
   const [filterMapel, setFilterMapel] = useState<string>('all');
@@ -212,37 +232,26 @@ export const AdminBankSoal: React.FC = () => {
     }
   };
 
-  // Restore 80 standard questions
-  const handleRestoreDefaultQuestions = async () => {
-    if (confirm('Apakah Anda ingin memuat ulang 80 butir soal standar (TKA Matematika & Bahasa Indonesia)?')) {
-      const restored = StorageService.restoreDefaultQuestions();
-      setQuestions(restored);
-      setSyncFeedback({
-        type: 'success',
-        message: '80 butir soal standar berhasil dimuat ulang ke aplikasi. Mengunggah ke Spreadsheet...',
-      });
-      try {
-        await StorageService.uploadAllQuestionsToSpreadsheet(restored);
-        setSyncFeedback({
-          type: 'success',
-          message: '80 butir soal standar berhasil dimuat dan disinkronkan ke Google Spreadsheet!',
-        });
-      } catch (_) {}
-    }
-  };
-
   // Pull latest questions from Google Spreadsheet
   const handlePullFromSpreadsheet = async () => {
     setIsPulling(true);
     setSyncFeedback(null);
     try {
       const res = await StorageService.fetchRemoteQuestions();
-      if (res.success && res.count > 0) {
-        setQuestions(StorageService.getQuestions());
-        setSyncFeedback({
-          type: 'success',
-          message: `Berhasil menarik ${res.count} butir soal terbaru dari Google Spreadsheet!`,
-        });
+      const latest = StorageService.getQuestions();
+      setQuestions(latest);
+      if (res.success) {
+        if (latest.length > 0) {
+          setSyncFeedback({
+            type: 'success',
+            message: `Berhasil menarik ${latest.length} butir soal terbaru dari Google Spreadsheet!`,
+          });
+        } else {
+          setSyncFeedback({
+            type: 'success',
+            message: 'Sinkronisasi berhasil: Sheet Soal di Spreadsheet saat ini kosong (0 butir soal).',
+          });
+        }
       } else {
         setSyncFeedback({
           type: 'error',
@@ -521,35 +530,36 @@ export const AdminBankSoal: React.FC = () => {
                       </div>
                       <p className="text-xs text-slate-500">
                         {questions.length === 0
-                          ? 'Seluruh soal di aplikasi telah dihapus. Anda dapat mengosongkan Sheet Soal di Google Spreadsheet agar benar-benar bersih, memuat ulang 80 soal standar, atau menambah butir soal baru.'
+                          ? 'Bank Soal aplikasi saat ini kosong (tidak ada soal bawaan). Soal akan otomatis ditarik dari Google Spreadsheet, atau Anda dapat menekan tombol Tarik Soal dari Spreadsheet di bawah.'
                           : 'Coba ubah filter mata pelajaran atau kata kunci pencarian Anda.'}
                       </p>
                       {questions.length === 0 && (
                         <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                           <button
                             type="button"
-                            onClick={handleUploadAllToSpreadsheet}
-                            disabled={isUploading}
-                            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
+                            onClick={handlePullFromSpreadsheet}
+                            disabled={isPulling}
+                            className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>{isUploading ? 'Sedang Mengosongkan...' : 'Kosongkan Sheet Soal di Spreadsheet Sekarang'}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleRestoreDefaultQuestions}
-                            className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                          >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            <span>Muat Ulang 80 Soal Standar</span>
+                            <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? 'animate-spin' : ''}`} />
+                            <span>{isPulling ? 'Menarik Soal...' : 'Tarik Soal dari Spreadsheet'}</span>
                           </button>
                           <button
                             type="button"
                             onClick={handleOpenCreate}
-                            className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Tambah Soal Baru</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleUploadAllToSpreadsheet}
+                            disabled={isUploading}
+                            className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{isUploading ? 'Sedang Mengosongkan...' : 'Kosongkan Sheet Soal di Spreadsheet'}</span>
                           </button>
                         </div>
                       )}

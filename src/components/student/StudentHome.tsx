@@ -171,6 +171,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               const isNotStarted = exam.status === 'Belum Dimulai';
               const isFinished = exam.status === 'Selesai';
               const isOngoing = exam.status === 'Sedang Berlangsung';
+              const availableQuestions = StorageService.getQuestions().filter((q) => q.mapel === exam.mapel && q.aktif).length;
 
               return (
                 <div
@@ -239,7 +240,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         <FileText className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                        <span>Jumlah: <strong>{exam.jumlah_soal} Soal</strong></span>
+                        <span>Jumlah: <strong>{availableQuestions > 0 ? `${availableQuestions} Soal` : '0 Soal'}</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-sky-600 shrink-0">📅</span>
@@ -309,14 +310,30 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                         <span>Ujian Telah Ditutup / Berakhir</span>
                       </button>
                     ) : (
-                      /* Sedang Berlangsung: Siswa dapat mulai mengerjakan */
-                      <button
-                        onClick={() => handleOpenConfirm(exam)}
-                        className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/20 transition-all cursor-pointer"
-                      >
-                        <span>Mulai Kerjakan Ujian</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
+                      /* Sedang Berlangsung: Siswa dapat mulai mengerjakan jika soal sudah ada */
+                      availableQuestions === 0 ? (
+                        <div className="space-y-1.5">
+                          <button
+                            type="button"
+                            disabled
+                            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed select-none"
+                          >
+                            <AlertCircle className="w-4 h-4 text-slate-400" />
+                            <span>Soal Belum Tersedia (0 Soal)</span>
+                          </button>
+                          <p className="text-[10px] text-slate-500 text-center">
+                            Proktor belum mengunggah butir soal untuk mata pelajaran ini.
+                          </p>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenConfirm(exam)}
+                          className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-600/20 transition-all cursor-pointer"
+                        >
+                          <span>Mulai Kerjakan Ujian</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      )
                     )}
                   </div>
                 </div>

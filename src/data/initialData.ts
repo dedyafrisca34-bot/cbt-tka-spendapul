@@ -738,55 +738,9 @@ const indonesianQuestionsData: Omit<Question, 'question_id' | 'mapel'>[] = [
   },
 ];
 
-// Fill out up to 40 questions each
-export const INITIAL_QUESTIONS: Question[] = [
-  ...mathQuestionsData.map((q, idx) => ({
-    ...q,
-    question_id: `q_math_${(idx + 1).toString().padStart(2, '0')}`,
-    mapel: 'Matematika' as const,
-  })),
-  // Additional math questions to reach 40
-  ...Array.from({ length: 40 - mathQuestionsData.length }).map((_, i) => {
-    const idx = mathQuestionsData.length + i;
-    return {
-      question_id: `q_math_${(idx + 1).toString().padStart(2, '0')}`,
-      mapel: 'Matematika' as const,
-      topik: 'Matematika Terapan & Logika',
-      level: (i % 3 === 0 ? 'C1' : i % 3 === 1 ? 'C2' : 'C3') as CognitiveLevel,
-      teks_soal: `Dalam sebuah kompetisi matematika sekolah, skor diperoleh dengan aturan: benar mendapat 4 poin, salah mendapat -2 poin, dan tidak dijawab mendapat 0 poin. Dari 40 butir soal, seorang siswa menjawab benar 32 soal dan tidak menjawab 3 soal. Total skor yang diperoleh siswa tersebut adalah ....`,
-      opsi_a: '118 poin',
-      opsi_b: '128 poin',
-      opsi_c: '112 poin',
-      opsi_d: '108 poin',
-      kunci: 'A' as const,
-      pembahasan: 'Salah = 40 - (32 + 3) = 5 soal. Skor = (32 × 4) + (5 × -2) + (3 × 0) = 128 - 10 = 118.',
-      aktif: true,
-    };
-  }),
-  ...indonesianQuestionsData.map((q, idx) => ({
-    ...q,
-    question_id: `q_indo_${(idx + 1).toString().padStart(2, '0')}`,
-    mapel: 'Bahasa Indonesia' as const,
-  })),
-  // Additional indo questions to reach 40
-  ...Array.from({ length: 40 - indonesianQuestionsData.length }).map((_, i) => {
-    const idx = indonesianQuestionsData.length + i;
-    return {
-      question_id: `q_indo_${(idx + 1).toString().padStart(2, '0')}`,
-      mapel: 'Bahasa Indonesia' as const,
-      topik: 'Pemahaman Bacaan dan Kebahasaan',
-      level: (i % 3 === 0 ? 'C1' : i % 3 === 1 ? 'C2' : 'C3') as CognitiveLevel,
-      teks_soal: `Cermati paragraf berikut:\n"Penerapan disiplin positif di sekolah terbukti menciptakan lingkungan belajar yang kondusif. Siswa tidak lagi belajar karena rasa takut akan hukuman fisik, melainkan karena kesadaran diri untuk bertanggung jawab atas proses belajarnya."\n\nMakna kata "kondusif" dalam kutipan teks tersebut adalah ....`,
-      opsi_a: 'Tenang dan tidak ada suara gaduh',
-      opsi_b: 'Mendukung atau memberikan suasana yang memungkinkan terciptanya hasil yang baik',
-      opsi_c: 'Sangat ketat dan disiplin tinggi',
-      opsi_d: 'Menyenangkan dan bebas dari segala aturan',
-      kunci: 'B' as const,
-      pembahasan: 'Kondusif berarti memberi peluang pada terjadinya hasil yang diinginkan / mendukung proses pembelajaran.',
-      aktif: true,
-    };
-  }),
-];
+// Default questions is completely empty (0 questions) as requested
+// All questions are fetched dynamically from Google Spreadsheet so any PC/device sees real data
+export const INITIAL_QUESTIONS: Question[] = [];
 
 export const INITIAL_EXAMS: Exam[] = [
   {
@@ -796,13 +750,13 @@ export const INITIAL_EXAMS: Exam[] = [
     durasi_menit: 90,
     mulai_at: '08:00',
     selesai_at: '10:00',
-    jumlah_soal: 40,
+    jumlah_soal: 0,
     acak_soal: false,
     acak_opsi: false,
     tampilkan_nilai: true,
     status: 'Sedang Berlangsung',
     tahun_pelajaran: '',
-    question_ids: INITIAL_QUESTIONS.filter((q) => q.mapel === 'Matematika').map((q) => q.question_id),
+    question_ids: [],
   },
   {
     exam_id: 'exam_02',
@@ -811,13 +765,13 @@ export const INITIAL_EXAMS: Exam[] = [
     durasi_menit: 90,
     mulai_at: '10:30',
     selesai_at: '12:30',
-    jumlah_soal: 40,
+    jumlah_soal: 0,
     acak_soal: false,
     acak_opsi: false,
     tampilkan_nilai: true,
     status: 'Sedang Berlangsung',
     tahun_pelajaran: '',
-    question_ids: INITIAL_QUESTIONS.filter((q) => q.mapel === 'Bahasa Indonesia').map((q) => q.question_id),
+    question_ids: [],
   },
 ];
 

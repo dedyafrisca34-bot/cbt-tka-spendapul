@@ -131,8 +131,25 @@ export const StorageService = {
         localStorage.setItem(KEYS.STUDENTS, JSON.stringify(cleaned.length > 0 ? cleaned : INITIAL_STUDENTS));
       }
     }
-    if (!localStorage.getItem(KEYS.QUESTIONS)) {
-      localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(INITIAL_QUESTIONS));
+    // Ensure questions are clean and empty by default (no mock/dummy questions)
+    // Any questions must come strictly from Google Spreadsheet or manual input by proctor
+    const CLEAN_QUESTIONS_FLAG = 'v4_clean_no_mock_questions';
+    const isCleanFlag = localStorage.getItem('cbt_clean_questions_flag') === CLEAN_QUESTIONS_FLAG;
+    if (!isCleanFlag) {
+      const storedQ = safeParse<Question[]>(localStorage.getItem(KEYS.QUESTIONS), []);
+      const hasMock = storedQ.some(
+        (q) =>
+          q.question_id?.startsWith('q_math_') ||
+          q.question_id?.startsWith('q_indo_') ||
+          (typeof q.teks_soal === 'string' &&
+            (q.teks_soal.includes('Sebuah taman berbentuk persegi panjang') ||
+             q.teks_soal.includes('Hasil dari 12 + 18') ||
+             q.teks_soal.includes('Nilai dari 5³')))
+      );
+      if (hasMock || !localStorage.getItem(KEYS.QUESTIONS)) {
+        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
+      }
+      localStorage.setItem('cbt_clean_questions_flag', CLEAN_QUESTIONS_FLAG);
     }
     
     // Always clean up and strictly deduplicate exams in localStorage to ensure exactly 2 official subjects
@@ -383,7 +400,7 @@ export const StorageService = {
   // Questions
   getQuestions(): Question[] {
     this.init();
-    return safeParse<Question[]>(localStorage.getItem(KEYS.QUESTIONS), INITIAL_QUESTIONS);
+    return safeParse<Question[]>(localStorage.getItem(KEYS.QUESTIONS), []);
   },
 
   saveQuestion(question: Question) {
@@ -414,7 +431,7 @@ export const StorageService = {
     this.uploadAllQuestionsToSpreadsheet(list).catch(() => {});
   },
 
-  // Pull remote questions from Google Spreadsheet (so student phones update automatically)
+  // Pull remote questions from Google Spreadsheet (so all PCs, laptops, and student phones update automatically)
   async fetchRemoteQuestions(): Promise<{ success: boolean; count: number; error?: string }> {
     try {
       const settings = this.getSettings();
@@ -424,9 +441,19 @@ export const StorageService = {
       const resp = await fetch(`${endpoint}?action=getQuestions`);
       if (!resp.ok) return { success: false, count: 0, error: `HTTP ${resp.status}` };
       const data = await resp.json();
-      if (data && data.success && Array.isArray(data.questions) && data.questions.length > 0) {
-        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(data.questions));
-        return { success: true, count: data.questions.length };
+      if (data && data.success && Array.isArray(data.questions)) {
+        // Filter out any leftover mock questions or purge keys that may have been in older tests
+        const realQuestions = data.questions.filter(
+          (q: Question) =>
+            !q.question_id?.startsWith('q_math_') &&
+            !q.question_id?.startsWith('q_indo_') &&
+            !q.question_id?.startsWith('PURGE_CLEAR_ALL_')
+        );
+        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(realQuestions));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cbt_questions_updated', { detail: realQuestions }));
+        }
+        return { success: true, count: realQuestions.length };
       }
       return { success: false, count: 0, error: data?.message || 'Data soal di Spreadsheet masih kosong.' };
     } catch (err: unknown) {
@@ -808,8 +835,11 @@ export const StorageService = {
     if (examQuestions.length === 0) {
       examQuestions = allQuestions.filter((q) => q.mapel === exam.mapel && q.aktif);
     }
+    if (examQuestions.length === 0) {
+      throw new Error(`Belum ada butir soal untuk mata pelajaran ${exam.mapel}. Silakan hubungi proktor atau tunggu sinkronisasi soal.`);
+    }
     // Limit to exam.jumlah_soal if specified
-    if (exam.jumlah_soal && examQuestions.length > exam.jumlah_soal) {
+    if (exam.jumlah_soal && exam.jumlah_soal > 0 && examQuestions.length > exam.jumlah_soal) {
       examQuestions = examQuestions.slice(0, exam.jumlah_soal);
     }
 
