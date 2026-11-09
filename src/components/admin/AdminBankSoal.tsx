@@ -11,13 +11,8 @@ export const AdminBankSoal: React.FC = () => {
   const [isPulling, setIsPulling] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Auto-pull real questions from Spreadsheet on mount & listen to updates
+  // Listen to manual question updates (e.g. when user clicks Tarik Soal)
   useEffect(() => {
-    StorageService.fetchRemoteQuestions().then((res) => {
-      if (res.success) {
-        setQuestions(StorageService.getQuestions());
-      }
-    }).catch(() => {});
 
     const handleQuestionsUpdated = (e: any) => {
       if (Array.isArray(e.detail)) {

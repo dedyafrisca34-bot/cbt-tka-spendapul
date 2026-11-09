@@ -26,12 +26,11 @@ type StudentScreen =
   | { screen: 'result'; exam: Exam; attempt: ExamAttempt };
 
 export default function App() {
-  // Initialize local persistent storage and auto-sync latest cloud settings, exams, and questions
+  // Initialize local persistent storage and auto-sync latest cloud settings and exams
   useEffect(() => {
     StorageService.init();
     StorageService.fetchRemoteSettings().catch(() => {});
     StorageService.fetchRemoteExams().catch(() => {});
-    StorageService.fetchRemoteQuestions().catch(() => {});
   }, []);
 
   // Authentication State

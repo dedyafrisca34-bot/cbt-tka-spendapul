@@ -529,7 +529,7 @@ function getQuestionsHandler() {
   const rows = sheet.getDataRange().getDisplayValues();
   const questions = [];
   function cleanCell(val) {
-    if (!val) return '';
+    if (val === null || val === undefined || val === '') return '';
     let s = String(val).trim();
     if (s.indexOf('GMT') !== -1 || /^[A-Za-z]{3}\s[A-Za-z]{3}\s\d{2}\s\d{4}/.test(s)) {
       try {

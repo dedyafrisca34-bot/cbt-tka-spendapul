@@ -163,25 +163,15 @@ export const StorageService = {
         localStorage.setItem(KEYS.STUDENTS, JSON.stringify(cleaned.length > 0 ? cleaned : INITIAL_STUDENTS));
       }
     }
-    // Ensure questions are clean and empty by default (no mock/dummy questions)
-    // Any questions must come strictly from Google Spreadsheet or manual input by proctor
-    const CLEAN_QUESTIONS_FLAG = 'v4_clean_no_mock_questions';
-    const isCleanFlag = localStorage.getItem('cbt_clean_questions_flag') === CLEAN_QUESTIONS_FLAG;
-    if (!isCleanFlag) {
-      const storedQ = safeParse<Question[]>(localStorage.getItem(KEYS.QUESTIONS), []);
-      const hasMock = storedQ.some(
-        (q) =>
-          q.question_id?.startsWith('q_math_') ||
-          q.question_id?.startsWith('q_indo_') ||
-          (typeof q.teks_soal === 'string' &&
-            (q.teks_soal.includes('Sebuah taman berbentuk persegi panjang') ||
-             q.teks_soal.includes('Hasil dari 12 + 18') ||
-             q.teks_soal.includes('Nilai dari 5³')))
-      );
-      if (hasMock || !localStorage.getItem(KEYS.QUESTIONS)) {
-        localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
-      }
-      localStorage.setItem('cbt_clean_questions_flag', CLEAN_QUESTIONS_FLAG);
+    // Ensure questions are strictly 100% empty in the app (0 questions)
+    // No default questions and no preloaded questions, allowing proctor full freedom to edit questions later
+    const STRICT_EMPTY_VERSION = 'v5_strict_empty_no_preload';
+    if (localStorage.getItem('cbt_strict_empty_version') !== STRICT_EMPTY_VERSION) {
+      localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
+      localStorage.setItem('cbt_strict_empty_version', STRICT_EMPTY_VERSION);
+    }
+    if (!localStorage.getItem(KEYS.QUESTIONS)) {
+      localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
     }
     
     // Always clean up and strictly deduplicate exams in localStorage to ensure exactly 2 official subjects

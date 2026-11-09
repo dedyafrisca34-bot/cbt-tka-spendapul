@@ -35,7 +35,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   // Uses staggered interval (10-15s) with per-device jitter to prevent network spikes when 140+ students are online
   useEffect(() => {
     handleRefresh();
-    StorageService.fetchRemoteQuestions().catch(() => {});
 
     const jitter = Math.floor(Math.random() * 5000); // 0 - 5s jitter per device
     const timer = setInterval(() => {
