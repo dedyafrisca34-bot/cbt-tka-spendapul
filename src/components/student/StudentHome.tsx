@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Clock, FileText, CheckCircle2, AlertTriangle, ArrowRight, Play, Eye, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 import { SchoolLogo } from '../common/SchoolLogo';
 import { Student, Exam, ExamAttempt } from '../../types/cbt';
-import { StorageService } from '../../services/storageService';
+import { StorageService, parseExamDateTime } from '../../services/storageService';
 
 interface StudentHomeProps {
   student: Student;
@@ -25,7 +25,10 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await StorageService.fetchRemoteExams();
+      await Promise.all([
+        StorageService.fetchRemoteQuestions().catch(() => {}),
+        StorageService.fetchRemoteExams().catch(() => {}),
+      ]);
     } catch (_) {}
     setExams(StorageService.getExams());
     setTimeout(() => setIsRefreshing(false), 400);
@@ -38,7 +41,10 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
     const jitter = Math.floor(Math.random() * 5000); // 0 - 5s jitter per device
     const timer = setInterval(() => {
-      StorageService.fetchRemoteExams().then(() => {
+      Promise.all([
+        StorageService.fetchRemoteExams().catch(() => {}),
+        StorageService.fetchRemoteQuestions().catch(() => {}),
+      ]).then(() => {
         setExams(StorageService.getExams());
       }).catch(() => {
         setExams(StorageService.getExams());
@@ -78,9 +84,17 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
     setConfirmModalOpen(true);
   };
 
-  const handleConfirmStart = () => {
+  const handleConfirmStart = async () => {
     if (selectedExam) {
       setConfirmModalOpen(false);
+      // Ensure questions for this subject are loaded in storage before launching exam
+      const currentQuestions = StorageService.getQuestions();
+      const examQuestions = currentQuestions.filter((q) => q.mapel === selectedExam.mapel && q.aktif);
+      if (examQuestions.length === 0) {
+        try {
+          await StorageService.fetchRemoteQuestions();
+        } catch (_) {}
+      }
       onStartExam(selectedExam.exam_id);
     }
   };
@@ -170,7 +184,15 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               const isNotStarted = exam.status === 'Belum Dimulai';
               const isFinished = exam.status === 'Selesai';
               const isOngoing = exam.status === 'Sedang Berlangsung';
-              const availableQuestions = StorageService.getQuestions().filter((q) => q.mapel === exam.mapel && q.aktif).length;
+
+              const parsedMulai = parseExamDateTime(exam.mulai_at);
+              const parsedSelesai = parseExamDateTime(exam.selesai_at);
+
+              const allQuestions = StorageService.getQuestions();
+              const mapelQuestions = allQuestions.filter((q) => q.mapel === exam.mapel && q.aktif);
+              const questionCount = mapelQuestions.length > 0
+                ? mapelQuestions.length
+                : (exam.question_ids?.length || exam.jumlah_soal || 30);
 
               return (
                 <div
@@ -239,15 +261,15 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         <FileText className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                        <span>Jumlah: <strong>{availableQuestions > 0 ? `${availableQuestions} Soal` : '0 Soal'}</strong></span>
+                        <span>Jumlah: <strong>{questionCount} Soal</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-sky-600 shrink-0">📅</span>
-                        <span>Jadwal: <strong>{exam.mulai_at.slice(0, 10)}</strong></span>
+                        <span>Jadwal: <strong>{parsedMulai.tanggal}</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-sky-600 shrink-0">🕒</span>
-                        <span>Waktu: <strong>{exam.mulai_at.slice(11)}</strong></span>
+                        <span>Waktu: <strong>{parsedMulai.jam} - {parsedSelesai.jam} WIB</strong></span>
                       </div>
                     </div>
                   </div>
@@ -310,7 +332,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                       </button>
                     ) : (
                       /* Sedang Berlangsung: Siswa dapat mulai mengerjakan jika soal sudah ada */
-                      availableQuestions === 0 ? (
+                      questionCount === 0 ? (
                         <div className="space-y-1.5">
                           <button
                             type="button"

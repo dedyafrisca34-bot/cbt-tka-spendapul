@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, CheckCircle2, Clock, Calendar, CheckSquare, Play, Square, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 import { Exam, Subject } from '../../types/cbt';
-import { StorageService } from '../../services/storageService';
+import { StorageService, parseExamDateTime } from '../../services/storageService';
 
 export const AdminUjian: React.FC = () => {
   const [exams, setExams] = useState<Exam[]>(() => StorageService.getExams());
@@ -10,7 +10,8 @@ export const AdminUjian: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await StorageService.fetchRemoteExams();
+      await StorageService.fetchRemoteQuestions().catch(() => {});
+      await StorageService.fetchRemoteExams().catch(() => {});
     } catch (_) {}
     setExams(StorageService.getExams());
     setTimeout(() => setIsRefreshing(false), 400);
@@ -57,7 +58,7 @@ export const AdminUjian: React.FC = () => {
   const [formTanggal, setFormTanggal] = useState(() => new Date().toISOString().split('T')[0]);
   const [formJamMulai, setFormJamMulai] = useState('08:00');
   const [formJamSelesai, setFormJamSelesai] = useState('10:00');
-  const [formJumlahSoal, setFormJumlahSoal] = useState<number>(40);
+  const [formJumlahSoal, setFormJumlahSoal] = useState<number>(30);
   const [formAcakSoal, setFormAcakSoal] = useState(false);
   const [formTampilkanNilai, setFormTampilkanNilai] = useState(true);
   const [formStatus, setFormStatus] = useState<'Belum Dimulai' | 'Sedang Berlangsung' | 'Selesai'>('Sedang Berlangsung');
@@ -70,7 +71,7 @@ export const AdminUjian: React.FC = () => {
     setFormTanggal(new Date().toISOString().split('T')[0]);
     setFormJamMulai('08:00');
     setFormJamSelesai('10:00');
-    setFormJumlahSoal(40);
+    setFormJumlahSoal(30);
     setFormAcakSoal(false);
     setFormTampilkanNilai(true);
     setFormStatus('Sedang Berlangsung');
@@ -82,10 +83,12 @@ export const AdminUjian: React.FC = () => {
     setFormJudul(exam.judul);
     setFormMapel(exam.mapel);
     setFormDurasi(exam.durasi_menit);
-    setFormTanggal(exam.mulai_at.slice(0, 10));
-    setFormJamMulai(exam.mulai_at.slice(11, 16));
-    setFormJamSelesai(exam.selesai_at.slice(11, 16));
-    setFormJumlahSoal(exam.jumlah_soal);
+    const parsedMulai = parseExamDateTime(exam.mulai_at);
+    const parsedSelesai = parseExamDateTime(exam.selesai_at);
+    setFormTanggal(parsedMulai.tanggal);
+    setFormJamMulai(parsedMulai.jam);
+    setFormJamSelesai(parsedSelesai.jam);
+    setFormJumlahSoal(exam.jumlah_soal || 30);
     setFormAcakSoal(exam.acak_soal);
     setFormTampilkanNilai(exam.tampilkan_nilai);
     setFormStatus(exam.status);
@@ -108,21 +111,26 @@ export const AdminUjian: React.FC = () => {
 
     const allQuestions = StorageService.getQuestions();
     const mapelQuestions = allQuestions.filter((q) => q.mapel === formMapel && q.aktif);
+    const questionCount = formJumlahSoal > 0
+      ? formJumlahSoal
+      : (mapelQuestions.length > 0 ? mapelQuestions.length : 30);
 
     const newExam: Exam = {
-      exam_id: editingExam ? editingExam.exam_id : `exam_${Date.now()}`,
+      exam_id: editingExam ? editingExam.exam_id : (formMapel === 'Matematika' ? 'exam_01' : 'exam_02'),
       judul: formJudul.trim(),
       mapel: formMapel,
       durasi_menit: formDurasi,
       mulai_at: `${formTanggal} ${formJamMulai}`,
       selesai_at: `${formTanggal} ${formJamSelesai}`,
-      jumlah_soal: formJumlahSoal,
+      jumlah_soal: questionCount,
       acak_soal: formAcakSoal,
       acak_opsi: false,
       tampilkan_nilai: formTampilkanNilai,
       status: formStatus,
       tahun_pelajaran: '',
-      question_ids: mapelQuestions.slice(0, formJumlahSoal).map((q) => q.question_id),
+      question_ids: mapelQuestions.length > 0
+        ? mapelQuestions.slice(0, questionCount).map((q) => q.question_id)
+        : (editingExam?.question_ids || []),
     };
 
     StorageService.saveExam(newExam);
@@ -183,25 +191,28 @@ export const AdminUjian: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {displayedExams.map((exam, idx) => (
-                <tr key={exam.exam_id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 text-center font-mono text-slate-500">{idx + 1}</td>
-                  <td className="py-3.5 px-5 font-bold text-slate-900">{exam.judul}</td>
-                  <td className="py-3.5 px-5">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold ${
-                        exam.mapel === 'Matematika'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-100'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                      }`}
-                    >
-                      {exam.mapel}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-5 text-slate-600">{exam.mulai_at.slice(0, 10)}</td>
-                  <td className="py-3.5 px-5 font-mono text-slate-600">
-                    {exam.mulai_at.slice(11)} - {exam.selesai_at.slice(11)}
-                  </td>
+              {displayedExams.map((exam, idx) => {
+                const parsedMulai = parseExamDateTime(exam.mulai_at);
+                const parsedSelesai = parseExamDateTime(exam.selesai_at);
+                return (
+                  <tr key={exam.exam_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3.5 px-5 text-center font-mono text-slate-500">{idx + 1}</td>
+                    <td className="py-3.5 px-5 font-bold text-slate-900">{exam.judul}</td>
+                    <td className="py-3.5 px-5">
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold ${
+                          exam.mapel === 'Matematika'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                        }`}
+                      >
+                        {exam.mapel}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-600">{parsedMulai.tanggal}</td>
+                    <td className="py-3.5 px-5 font-mono text-slate-600">
+                      {parsedMulai.jam} - {parsedSelesai.jam} WIB
+                    </td>
                   <td className="py-3.5 px-5">
                     <div className="flex flex-col gap-1.5 items-start">
                       {exam.status === 'Sedang Berlangsung' ? (
@@ -274,8 +285,9 @@ export const AdminUjian: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              );
+            })}
+          </tbody>
           </table>
         </div>
       </div>

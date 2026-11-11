@@ -1,7 +1,7 @@
 import React from 'react';
 import { Users, BookOpen, FileCheck, Trophy, Eye, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 import { AdminUser, Exam } from '../../types/cbt';
-import { StorageService } from '../../services/storageService';
+import { StorageService, parseExamDateTime } from '../../services/storageService';
 import { AdminTab } from './AdminLayout';
 
 interface AdminDashboardProps {
@@ -131,14 +131,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin, onNavigat
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {exams.map((exam, idx) => (
-                <tr key={exam.exam_id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 text-center font-mono text-slate-500">{idx + 1}</td>
-                  <td className="py-3.5 px-5 font-semibold text-slate-900">{exam.mapel}</td>
-                  <td className="py-3.5 px-5 text-slate-600">{exam.mulai_at.slice(0, 10)}</td>
-                  <td className="py-3.5 px-5 font-mono text-slate-600">
-                    {exam.mulai_at.slice(11)} - {exam.selesai_at.slice(11)}
-                  </td>
+              {exams.map((exam, idx) => {
+                const parsedMulai = parseExamDateTime(exam.mulai_at);
+                const parsedSelesai = parseExamDateTime(exam.selesai_at);
+                return (
+                  <tr key={exam.exam_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3.5 px-5 text-center font-mono text-slate-500">{idx + 1}</td>
+                    <td className="py-3.5 px-5 font-semibold text-slate-900">{exam.mapel}</td>
+                    <td className="py-3.5 px-5 text-slate-600">{parsedMulai.tanggal}</td>
+                    <td className="py-3.5 px-5 font-mono text-slate-600">
+                      {parsedMulai.jam} - {parsedSelesai.jam} WIB
+                    </td>
                   <td className="py-3.5 px-5">
                     {exam.status === 'Sedang Berlangsung' ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -162,8 +165,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin, onNavigat
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              );
+            })}
+          </tbody>
           </table>
         </div>
       </div>

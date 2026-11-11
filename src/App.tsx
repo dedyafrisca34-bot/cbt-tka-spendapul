@@ -26,11 +26,12 @@ type StudentScreen =
   | { screen: 'result'; exam: Exam; attempt: ExamAttempt };
 
 export default function App() {
-  // Initialize local persistent storage and auto-sync latest cloud settings and exams
+  // Initialize local persistent storage and auto-sync latest cloud settings, exams, and questions from Google Spreadsheet
   useEffect(() => {
     StorageService.init();
     StorageService.fetchRemoteSettings().catch(() => {});
     StorageService.fetchRemoteExams().catch(() => {});
+    StorageService.fetchRemoteQuestions().catch(() => {});
   }, []);
 
   // Authentication State
@@ -61,9 +62,13 @@ export default function App() {
   };
 
   // Student: Start or resume exam
-  const handleStartExam = (examId: string) => {
+  const handleStartExam = async (examId: string) => {
     if (auth.type !== 'student') return;
     try {
+      // If questions are not yet loaded in local storage, fetch them immediately from Spreadsheet
+      if (StorageService.getQuestions().length === 0) {
+        await StorageService.fetchRemoteQuestions().catch(() => {});
+      }
       const { attempt, exam } = StorageService.startOrResumeExam(auth.student.student_id, examId);
       setStudentScreen({ screen: 'taking', exam, attempt });
     } catch (err: unknown) {

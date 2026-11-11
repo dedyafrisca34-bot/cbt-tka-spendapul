@@ -145,6 +145,82 @@ export function cleanQuestionOption(val: unknown): string {
   return s;
 }
 
+// Helper to parse dates and times accurately without UTC/WIB shifting
+export function parseExamDateTime(val: string | undefined): { tanggal: string; jam: string } {
+  if (!val || typeof val !== 'string') {
+    const today = new Date().toISOString().split('T')[0];
+    return { tanggal: today, jam: '08:00' };
+  }
+
+  const s = val.trim();
+  if (!s) {
+    const today = new Date().toISOString().split('T')[0];
+    return { tanggal: today, jam: '08:00' };
+  }
+
+  // Case 1: UTC ISO timestamp e.g. "2026-11-11T06:00:00.000Z"
+  // When Google Sheets serializes Date cells via getValues(), it creates a UTC timestamp.
+  // In Indonesia, local time is WIB (UTC+7). new Date(s) correctly converts UTC to the user's local timezone!
+  if (s.endsWith('Z') || s.includes('+') || s.includes('GMT')) {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return {
+        tanggal: `${year}-${month}-${day}`,
+        jam: `${hours}:${minutes}`,
+      };
+    }
+  }
+
+  // Case 2: "YYYY-MM-DD HH:mm" or "YYYY-MM-DDTHH:mm" (local time saved by proctor)
+  const localMatch = s.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{1,2}):(\d{2})/);
+  if (localMatch) {
+    return {
+      tanggal: localMatch[1],
+      jam: `${localMatch[2].padStart(2, '0')}:${localMatch[3]}`,
+    };
+  }
+
+  // Case 3: Date only "YYYY-MM-DD"
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return {
+      tanggal: s,
+      jam: '08:00',
+    };
+  }
+
+  // Case 4: Time only "HH:mm"
+  if (/^\d{1,2}:\d{2}$/.test(s)) {
+    const today = new Date().toISOString().split('T')[0];
+    const parts = s.split(':');
+    return {
+      tanggal: today,
+      jam: `${parts[0].padStart(2, '0')}:${parts[1]}`,
+    };
+  }
+
+  // Fallback: Date constructor
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return {
+      tanggal: `${year}-${month}-${day}`,
+      jam: `${hours}:${minutes}`,
+    };
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  return { tanggal: today, jam: '08:00' };
+}
+
 export const StorageService = {
   // Initialize storage if empty
   init() {
@@ -163,13 +239,7 @@ export const StorageService = {
         localStorage.setItem(KEYS.STUDENTS, JSON.stringify(cleaned.length > 0 ? cleaned : INITIAL_STUDENTS));
       }
     }
-    // Ensure questions are strictly 100% empty in the app (0 questions)
-    // No default questions and no preloaded questions, allowing proctor full freedom to edit questions later
-    const STRICT_EMPTY_VERSION = 'v5_strict_empty_no_preload';
-    if (localStorage.getItem('cbt_strict_empty_version') !== STRICT_EMPTY_VERSION) {
-      localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
-      localStorage.setItem('cbt_strict_empty_version', STRICT_EMPTY_VERSION);
-    }
+    // Initialize questions storage if null (preserves fetched questions and does not wipe them)
     if (!localStorage.getItem(KEYS.QUESTIONS)) {
       localStorage.setItem(KEYS.QUESTIONS, JSON.stringify([]));
     }
@@ -774,14 +844,19 @@ export const StorageService = {
           const localMatch = localExams.find((l) => l.mapel === mapel || l.exam_id === remote.exam_id);
           const qIds = allQuestions.filter((q) => q.mapel === mapel && q.aktif).map((q) => q.question_id);
 
+          const parsedMulai = parseExamDateTime(remote.mulai_at || localMatch?.mulai_at);
+          const parsedSelesai = parseExamDateTime(remote.selesai_at || localMatch?.selesai_at);
+          const cleanMulai = `${parsedMulai.tanggal} ${parsedMulai.jam}`;
+          const cleanSelesai = `${parsedSelesai.tanggal} ${parsedSelesai.jam}`;
+
           finalExams.push({
             exam_id: remote.exam_id || localMatch?.exam_id || (mapel === 'Matematika' ? 'exam_01' : 'exam_02'),
             judul: remote.judul || localMatch?.judul || `TKA ${mapel} Kelas IX`,
             mapel: mapel,
             durasi_menit: Number(remote.durasi_menit || localMatch?.durasi_menit || 90),
-            mulai_at: remote.mulai_at || localMatch?.mulai_at || '08:00',
-            selesai_at: remote.selesai_at || localMatch?.selesai_at || '10:00',
-            jumlah_soal: Number(remote.jumlah_soal || localMatch?.jumlah_soal || 40),
+            mulai_at: cleanMulai,
+            selesai_at: cleanSelesai,
+            jumlah_soal: Number(remote.jumlah_soal) > 0 ? Number(remote.jumlah_soal) : (qIds.length > 0 ? qIds.length : (localMatch?.jumlah_soal || 30)),
             acak_soal: remote.acak_soal !== undefined ? Boolean(remote.acak_soal) : Boolean(localMatch?.acak_soal),
             acak_opsi: false,
             tampilkan_nilai: remote.tampilkan_nilai !== undefined ? Boolean(remote.tampilkan_nilai) : true,

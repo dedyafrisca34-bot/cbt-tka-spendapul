@@ -460,7 +460,10 @@ function studentLoginHandler(data) {
 function getExamsHandler() {
   const ss = getDbSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.UJIAN);
-  const rows = sheet.getDataRange().getValues();
+  if (!sheet) {
+    return createJsonResponse({ success: true, exams: [] });
+  }
+  const rows = sheet.getDataRange().getDisplayValues();
 
   const exams = [];
   // exam_id | judul | mapel | durasi_menit | mulai_at | selesai_at | jumlah_soal | acak_soal | acak_opsi | tampilkan_nilai | status
