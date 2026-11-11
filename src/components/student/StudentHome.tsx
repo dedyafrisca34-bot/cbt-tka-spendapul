@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Clock, FileText, CheckCircle2, AlertTriangle, ArrowRight, Play, Eye, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 import { SchoolLogo } from '../common/SchoolLogo';
 import { Student, Exam, ExamAttempt } from '../../types/cbt';
-import { StorageService, parseExamDateTime } from '../../services/storageService';
+import { StorageService, parseExamDateTime, calculateTimeDifferenceMinutes } from '../../services/storageService';
 
 interface StudentHomeProps {
   student: Student;
@@ -187,6 +187,8 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
               const parsedMulai = parseExamDateTime(exam.mulai_at);
               const parsedSelesai = parseExamDateTime(exam.selesai_at);
+              const timeDiff = calculateTimeDifferenceMinutes(parsedMulai.jam, parsedSelesai.jam);
+              const effectiveDuration = timeDiff > 0 ? timeDiff : (exam.durasi_menit || 90);
 
               const allQuestions = StorageService.getQuestions();
               const mapelQuestions = allQuestions.filter((q) => q.mapel === exam.mapel && q.aktif);
@@ -257,7 +259,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                     <div className="grid grid-cols-2 gap-2 mt-4 sm:mt-5 py-3 border-y border-slate-100 text-[11px] sm:text-xs text-slate-600">
                       <div className="flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                        <span>Durasi: <strong>{exam.durasi_menit}m</strong></span>
+                        <span>Durasi: <strong>{effectiveDuration} Menit</strong></span>
                       </div>
                       <div className="flex items-center gap-2">
                         <FileText className="w-3.5 h-3.5 text-sky-600 shrink-0" />
@@ -406,7 +408,11 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Durasi:</span>
-                <span className="font-bold text-sky-700">{selectedExam.durasi_menit} Menit</span>
+                <span className="font-bold text-sky-700">
+                  {calculateTimeDifferenceMinutes(selectedExam.mulai_at, selectedExam.selesai_at) > 0
+                    ? calculateTimeDifferenceMinutes(selectedExam.mulai_at, selectedExam.selesai_at)
+                    : (selectedExam.durasi_menit || 90)} Menit
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Jumlah Soal:</span>

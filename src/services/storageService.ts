@@ -221,6 +221,24 @@ export function parseExamDateTime(val: string | undefined): { tanggal: string; j
   return { tanggal: today, jam: '08:00' };
 }
 
+// Calculate duration in minutes between start time and end time (e.g. 13:00 to 15:00 = 120 minutes)
+export function calculateTimeDifferenceMinutes(mulaiAt: string | undefined, selesaiAt: string | undefined): number {
+  if (!mulaiAt || !selesaiAt) return 0;
+  const m = parseExamDateTime(mulaiAt);
+  const s = parseExamDateTime(selesaiAt);
+  if (!m.jam || !s.jam) return 0;
+
+  const [h1, min1] = m.jam.split(':').map(Number);
+  const [h2, min2] = s.jam.split(':').map(Number);
+  if (isNaN(h1) || isNaN(min1) || isNaN(h2) || isNaN(min2)) return 0;
+
+  let diff = (h2 * 60 + min2) - (h1 * 60 + min1);
+  if (diff < 0) {
+    diff += 24 * 60; // Cross midnight
+  }
+  return diff;
+}
+
 export const StorageService = {
   // Initialize storage if empty
   init() {
@@ -849,11 +867,20 @@ export const StorageService = {
           const cleanMulai = `${parsedMulai.tanggal} ${parsedMulai.jam}`;
           const cleanSelesai = `${parsedSelesai.tanggal} ${parsedSelesai.jam}`;
 
+          // Calculate duration in minutes from the scheduled time range (e.g. 13:00 - 15:00 = 120 minutes)
+          const timeWindowDiff = calculateTimeDifferenceMinutes(cleanMulai, cleanSelesai);
+          let effectiveDuration = Number(remote.durasi_menit);
+          if (timeWindowDiff > 0 && (isNaN(effectiveDuration) || effectiveDuration <= 0 || timeWindowDiff !== effectiveDuration)) {
+            effectiveDuration = timeWindowDiff;
+          } else if (isNaN(effectiveDuration) || effectiveDuration <= 0) {
+            effectiveDuration = localMatch?.durasi_menit || 90;
+          }
+
           finalExams.push({
             exam_id: remote.exam_id || localMatch?.exam_id || (mapel === 'Matematika' ? 'exam_01' : 'exam_02'),
             judul: remote.judul || localMatch?.judul || `TKA ${mapel} Kelas IX`,
             mapel: mapel,
-            durasi_menit: Number(remote.durasi_menit || localMatch?.durasi_menit || 90),
+            durasi_menit: effectiveDuration,
             mulai_at: cleanMulai,
             selesai_at: cleanSelesai,
             jumlah_soal: Number(remote.jumlah_soal) > 0 ? Number(remote.jumlah_soal) : (qIds.length > 0 ? qIds.length : (localMatch?.jumlah_soal || 30)),
@@ -961,7 +988,9 @@ export const StorageService = {
       }
 
       const now = new Date();
-      const endTime = new Date(now.getTime() + exam.durasi_menit * 60 * 1000);
+      const timeDiff = calculateTimeDifferenceMinutes(exam.mulai_at, exam.selesai_at);
+      const effectiveDuration = timeDiff > 0 ? timeDiff : (exam.durasi_menit || 90);
+      const endTime = new Date(now.getTime() + effectiveDuration * 60 * 1000);
       attempt = {
         attempt_id: `att_${studentId}_${examId}_${Date.now()}`,
         exam_id: examId,

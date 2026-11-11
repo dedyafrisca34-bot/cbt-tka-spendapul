@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, CheckCircle2, Clock, Calendar, CheckSquare, Play, Square, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 import { Exam, Subject } from '../../types/cbt';
-import { StorageService, parseExamDateTime } from '../../services/storageService';
+import { StorageService, parseExamDateTime, calculateTimeDifferenceMinutes } from '../../services/storageService';
 
 export const AdminUjian: React.FC = () => {
   const [exams, setExams] = useState<Exam[]>(() => StorageService.getExams());
@@ -54,7 +54,7 @@ export const AdminUjian: React.FC = () => {
   // Form Fields
   const [formJudul, setFormJudul] = useState('');
   const [formMapel, setFormMapel] = useState<Subject>('Matematika');
-  const [formDurasi, setFormDurasi] = useState<number>(90);
+  const [formDurasi, setFormDurasi] = useState<number>(120);
   const [formTanggal, setFormTanggal] = useState(() => new Date().toISOString().split('T')[0]);
   const [formJamMulai, setFormJamMulai] = useState('08:00');
   const [formJamSelesai, setFormJamSelesai] = useState('10:00');
@@ -63,14 +63,44 @@ export const AdminUjian: React.FC = () => {
   const [formTampilkanNilai, setFormTampilkanNilai] = useState(true);
   const [formStatus, setFormStatus] = useState<'Belum Dimulai' | 'Sedang Berlangsung' | 'Selesai'>('Sedang Berlangsung');
 
+  // Handlers to synchronize Jam Mulai, Jam Selesai, and Durasi automatically
+  const handleJamMulaiChange = (newMulai: string) => {
+    setFormJamMulai(newMulai);
+    const diff = calculateTimeDifferenceMinutes(newMulai, formJamSelesai);
+    if (diff > 0) {
+      setFormDurasi(diff);
+    }
+  };
+
+  const handleJamSelesaiChange = (newSelesai: string) => {
+    setFormJamSelesai(newSelesai);
+    const diff = calculateTimeDifferenceMinutes(formJamMulai, newSelesai);
+    if (diff > 0) {
+      setFormDurasi(diff);
+    }
+  };
+
+  const handleDurasiChange = (newDurasi: number) => {
+    setFormDurasi(newDurasi);
+    if (formJamMulai && newDurasi > 0) {
+      const [h, m] = formJamMulai.split(':').map(Number);
+      if (!isNaN(h) && !isNaN(m)) {
+        const totalMin = h * 60 + m + newDurasi;
+        const newH = Math.floor((totalMin / 60) % 24);
+        const newM = totalMin % 60;
+        setFormJamSelesai(`${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`);
+      }
+    }
+  };
+
   const handleOpenCreate = () => {
     setEditingExam(null);
     setFormJudul('TKA Matematika Kelas IX');
     setFormMapel('Matematika');
-    setFormDurasi(90);
     setFormTanggal(new Date().toISOString().split('T')[0]);
     setFormJamMulai('08:00');
     setFormJamSelesai('10:00');
+    setFormDurasi(120);
     setFormJumlahSoal(30);
     setFormAcakSoal(false);
     setFormTampilkanNilai(true);
@@ -82,12 +112,15 @@ export const AdminUjian: React.FC = () => {
     setEditingExam(exam);
     setFormJudul(exam.judul);
     setFormMapel(exam.mapel);
-    setFormDurasi(exam.durasi_menit);
     const parsedMulai = parseExamDateTime(exam.mulai_at);
     const parsedSelesai = parseExamDateTime(exam.selesai_at);
     setFormTanggal(parsedMulai.tanggal);
     setFormJamMulai(parsedMulai.jam);
     setFormJamSelesai(parsedSelesai.jam);
+    
+    // Automatically calculate duration from time window (e.g. 13:00 to 15:00 = 120 minutes)
+    const timeDiff = calculateTimeDifferenceMinutes(parsedMulai.jam, parsedSelesai.jam);
+    setFormDurasi(timeDiff > 0 ? timeDiff : (exam.durasi_menit || 90));
     setFormJumlahSoal(exam.jumlah_soal || 30);
     setFormAcakSoal(exam.acak_soal);
     setFormTampilkanNilai(exam.tampilkan_nilai);
@@ -115,11 +148,15 @@ export const AdminUjian: React.FC = () => {
       ? formJumlahSoal
       : (mapelQuestions.length > 0 ? mapelQuestions.length : 30);
 
+    // Guarantee duration matches the time window if specified
+    const timeDiff = calculateTimeDifferenceMinutes(formJamMulai, formJamSelesai);
+    const finalDurasi = formDurasi > 0 ? formDurasi : (timeDiff > 0 ? timeDiff : 90);
+
     const newExam: Exam = {
       exam_id: editingExam ? editingExam.exam_id : (formMapel === 'Matematika' ? 'exam_01' : 'exam_02'),
       judul: formJudul.trim(),
       mapel: formMapel,
-      durasi_menit: formDurasi,
+      durasi_menit: finalDurasi,
       mulai_at: `${formTanggal} ${formJamMulai}`,
       selesai_at: `${formTanggal} ${formJamSelesai}`,
       jumlah_soal: questionCount,
@@ -136,7 +173,7 @@ export const AdminUjian: React.FC = () => {
     StorageService.saveExam(newExam);
     setExams(StorageService.getExams());
     setIsFormOpen(false);
-    alert(`Pengaturan ujian ${newExam.mapel} (${newExam.jumlah_soal} butir soal) berhasil disimpan dan disinkronkan ke Spreadsheet & HP siswa!`);
+    alert(`Pengaturan ujian ${newExam.mapel} (Durasi: ${newExam.durasi_menit} Menit, ${newExam.jumlah_soal} butir soal) berhasil disimpan dan disinkronkan ke Spreadsheet & HP siswa!`);
   };
 
   return (
@@ -335,14 +372,19 @@ export const AdminUjian: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Durasi Pengerjaan</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-slate-700">Durasi Pengerjaan</label>
+                    <span className="text-[11px] text-sky-600 font-medium">
+                      Otomatis: {formJamMulai} s.d. {formJamSelesai} ({formDurasi}m)
+                    </span>
+                  </div>
                   <div className="relative">
                     <input
                       type="number"
                       value={formDurasi}
-                      onChange={(e) => setFormDurasi(Number(e.target.value))}
+                      onChange={(e) => handleDurasiChange(Number(e.target.value))}
                       min={10}
-                      max={180}
+                      max={300}
                       className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono"
                       required
                     />
@@ -367,7 +409,7 @@ export const AdminUjian: React.FC = () => {
                   <input
                     type="time"
                     value={formJamMulai}
-                    onChange={(e) => setFormJamMulai(e.target.value)}
+                    onChange={(e) => handleJamMulaiChange(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
                     required
                   />
@@ -377,7 +419,7 @@ export const AdminUjian: React.FC = () => {
                   <input
                     type="time"
                     value={formJamSelesai}
-                    onChange={(e) => setFormJamSelesai(e.target.value)}
+                    onChange={(e) => handleJamSelesaiChange(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
                     required
                   />
